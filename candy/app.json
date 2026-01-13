@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "candy-shop-app",
-    "slug": "candy-shop-app",
+    "name": "candy",
+    "slug": "candy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "candyshopapp",
+    "scheme": "candy",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

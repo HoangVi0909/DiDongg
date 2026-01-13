@@ -1,11 +1,8 @@
 package com.example.__NguyenHoangVi.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "orders")
@@ -16,7 +13,20 @@ public class Order {
     private Long id;
 
     private Long customerId;
+    private String customerName;
+    private String phone;
+    private String address;
     private String orderChannel;
+    private String paymentMethod;
     private Double totalAmount;
     private String status;
+    private String transactionCode; // Mã giao dịch ngân hàng
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
 }

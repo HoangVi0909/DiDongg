@@ -1,11 +1,8 @@
 package com.example.__NguyenHoangVi.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "users")
@@ -17,7 +14,20 @@ public class User {
 
     private String username;
     private String password;
+
+    @JsonProperty("full_name")
     private String fullName;
+
     private String email;
+    private String phone;
+    private String address;
     private Integer status;
+
+    @JsonProperty("role_id")
+    private Long roleId;
+
+    private String role; // Display field
+
+    @Transient
+    private Boolean active;
 }

@@ -1,14 +1,8 @@
 package com.example.__NguyenHoangVi.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.Data;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-
 import jakarta.persistence.*;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "products")
@@ -20,14 +14,27 @@ public class Product {
     private Long id;
 
     private String name;
-
+    private String description;
     private Double price;
-
     private Integer quantity;
+    private Integer stockQuantity;
 
-    // 👉 LINK ẢNH
+    @JsonProperty("image")
     private String image;
 
+    @JsonProperty("imageUrl")
+    @Transient
+    public String getImageUrl() {
+        return this.image;
+    }
+
     @Column(name = "category_id")
+    @JsonProperty("categoryId")
     private Long categoryId;
+
+    @Column(name = "brand_id")
+    @JsonProperty("brandId")
+    private Long brandId;
+
+    private Integer status;
 }
