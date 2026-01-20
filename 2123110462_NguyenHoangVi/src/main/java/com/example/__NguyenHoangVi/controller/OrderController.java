@@ -19,12 +19,14 @@ public class OrderController {
     private OrderRepository repo;
 
     // GET http://localhost:8080/api/orders
+    // Lấy tất cả đơn hàng
     @GetMapping
     public List<Order> getAll() {
         return repo.findAll();
     }
 
     // POST http://localhost:8080/api/orders
+    // Tạo đơn hàng mới
     @PostMapping
     public ResponseEntity<Map<String, Object>> create(@RequestBody OrderRequest request) {
         // Tạo đơn hàng mới

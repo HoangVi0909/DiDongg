@@ -68,8 +68,9 @@ export default function ProductListScreen() {
     // Lọc theo tìm kiếm
     const matchesSearch = product.name?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Lọc theo danh mục
-    const matchesCategory = selectedCategory === null || product.categoryId === selectedCategory;
+    // Lọc theo danh mục - sử dụng category_id từ backend
+    const productCategoryId = (product as any).category_id || product.categoryId;
+    const matchesCategory = selectedCategory === null || productCategoryId === selectedCategory;
     
     // Lọc theo giá
     let matchesPrice = true;
@@ -90,7 +91,7 @@ export default function ProductListScreen() {
       onPress={() => router.push(`/ProductDetail?id=${item.id}` as any)}
     >
       <Image
-        source={{ uri: item.imageUrl || 'https://via.placeholder.com/150' }}
+        source={{ uri: (item as any).image || item.imageUrl || 'https://via.placeholder.com/150' }}
         style={styles.productImage}
       />
       <Text style={styles.productName} numberOfLines={2}>
@@ -119,6 +120,50 @@ export default function ProductListScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Hero Section with Featured Products */}
+      <View style={styles.heroSection}>
+        <Text style={styles.heroTitle}>🍬 Sản phẩm nổi bật</Text>
+        <Text style={styles.heroSubtitle}>Những kẹo ngon từ khắp nơi trên thế giới</Text>
+      </View>
+
+      {/* Featured Products Carousel */}
+      {filteredProducts.length > 0 && (
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.featuredScroll}
+          contentContainerStyle={styles.featuredContainer}
+        >
+          {filteredProducts.slice(0, 5).map((product) => (
+            <TouchableOpacity
+              key={product.id}
+              style={styles.featuredCard}
+              onPress={() => router.push(`/ProductDetail?id=${product.id}` as any)}
+            >
+              <Image
+                source={{ uri: (product as any).image || product.imageUrl || 'https://via.placeholder.com/150' }}
+                style={styles.featuredImage}
+              />
+              <View style={styles.featuredInfo}>
+                <Text style={styles.featuredName} numberOfLines={2}>
+                  {product.name}
+                </Text>
+                <Text style={styles.featuredPrice}>₫{(product.price || 0).toLocaleString()}</Text>
+                <TouchableOpacity
+                  style={styles.featuredAddButton}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    addToCart(product, 1);
+                  }}
+                >
+                  <Text style={styles.featuredAddText}>Thêm vào giỏ</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
+
       {/* Thanh tìm kiếm */}
       <View style={styles.searchContainer}>
         <TextInput
@@ -244,10 +289,95 @@ export default function ProductListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+  const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  heroSection: {
+    backgroundColor: '#ff6b35',
+    paddingHorizontal: 20,
+    paddingVertical: 32,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 6,
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    color: '#fff',
+    opacity: 0.9,
+  },
+  featuredScroll: {
+    backgroundColor: '#fff',
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  featuredContainer: {
+    paddingHorizontal: 12,
+    paddingVertical: 16,
+    gap: 12,
+  },
+  featuredCard: {
+    width: 220,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  featuredImage: {
+    width: '100%',
+    height: 160,
+    backgroundColor: '#f0f0f0',
+  },
+  featuredInfo: {
+    padding: 14,
+  },
+  featuredName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#222',
+    marginBottom: 8,
+    height: 36,
+  },
+  featuredPrice: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ff6b35',
+    marginBottom: 10,
+  },
+  featuredAddButton: {
+    backgroundColor: '#ff6b35',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    shadowColor: '#ff6b35',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  featuredAddText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fff',
   },
   loadingContainer: {
     flex: 1,
@@ -256,30 +386,36 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     backgroundColor: '#fff',
-    padding: 12,
+    padding: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   searchInput: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 14,
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
+    color: '#333',
   },
   filterButton: {
-    backgroundColor: '#ee4d2d',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
+    backgroundColor: '#ff6b35',
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 10,
+    shadowColor: '#ff6b35',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   filterButtonText: {
     color: '#fff',
-    fontWeight: '600',
-    fontSize: 13,
+    fontWeight: '700',
+    fontSize: 15,
   },
   categoryScroll: {
     backgroundColor: '#fff',
@@ -287,122 +423,129 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   categoryContainer: {
-    padding: 12,
-    gap: 8,
+    padding: 14,
+    gap: 10,
   },
   categoryChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 24,
     backgroundColor: '#f5f5f5',
-    borderWidth: 1,
-    borderColor: '#ddd',
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
   },
   categoryChipActive: {
-    backgroundColor: '#ee4d2d',
-    borderColor: '#ee4d2d',
+    backgroundColor: '#ff6b35',
+    borderColor: '#ff6b35',
   },
   categoryText: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#666',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   categoryTextActive: {
     color: '#fff',
+    fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 24,
     textAlign: 'center',
+    color: '#222',
   },
   priceOption: {
-    padding: 16,
-    borderRadius: 8,
+    padding: 18,
+    borderRadius: 12,
     backgroundColor: '#f5f5f5',
-    marginBottom: 10,
+    marginBottom: 12,
     borderWidth: 2,
     borderColor: '#f5f5f5',
   },
   priceOptionActive: {
-    backgroundColor: '#fee',
-    borderColor: '#ee4d2d',
+    backgroundColor: '#ffe6e0',
+    borderColor: '#ff6b35',
   },
   priceOptionText: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#333',
     textAlign: 'center',
+    fontWeight: '600',
   },
   priceOptionTextActive: {
-    color: '#ee4d2d',
+    color: '#ff6b35',
     fontWeight: 'bold',
+    fontSize: 17,
   },
   closeButton: {
-    marginTop: 10,
-    padding: 14,
-    backgroundColor: '#ddd',
-    borderRadius: 8,
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 12,
     alignItems: 'center',
   },
   closeButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#333',
   },
   listContainer: {
-    padding: 8,
+    padding: 10,
   },
   productCard: {
     flex: 1,
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 12,
     margin: 6,
     padding: 8,
     maxWidth: '48%',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 3,
     elevation: 2,
   },
   productImage: {
     width: '100%',
     height: 150,
-    borderRadius: 4,
+    borderRadius: 8,
     marginBottom: 8,
+    backgroundColor: '#f0f0f0',
   },
   productName: {
     fontSize: 13,
     color: '#333',
     marginBottom: 4,
     height: 34,
+    fontWeight: '600',
   },
   productPrice: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#ee4d2d',
+    color: '#ff6b35',
     marginBottom: 8,
   },
   addButton: {
-    backgroundColor: '#ee4d2d',
-    borderRadius: 4,
-    padding: 6,
+    backgroundColor: '#ff6b35',
+    borderRadius: 8,
+    padding: 8,
     alignItems: 'center',
   },
   addButtonText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#fff',
   },
 });

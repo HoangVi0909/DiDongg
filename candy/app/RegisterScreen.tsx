@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { getApiUrl } from '../config/network';
 
 // ...existing code...
@@ -16,114 +16,233 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
+    // Validate input
+    if (!fullName.trim() || !email.trim() || !username.trim() || !password.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin');
+      return;
+    }
+
+    // Validate full name - không được chứa số
+    if (/\d/.test(fullName)) {
+      Alert.alert('Lỗi', 'Họ và tên không được chứa số');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      Alert.alert('Lỗi', 'Email không đúng định dạng. Ví dụ: example@email.com');
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
+      return;
+    }
+
     setLoading(true);
     try {
+      // Register user (backend will handle duplicate username check)
       const res = await fetch(`${getApiUrl()}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, fullName, email, status: 1, role: 'customer' })
+        body: JSON.stringify({ 
+          username: username.trim(), 
+          password, 
+          fullName: fullName.trim(), 
+          email: email.trim(), 
+          status: 1, 
+          role: 'customer' 
+        })
       });
+      
       if (res.ok) {
-  Alert.alert('Đăng ký thành công!', 'Bạn có thể đăng nhập ngay.');
-  router.push('/Login');
+        Alert.alert('Đăng ký thành công!', 'Bạn có thể đăng nhập ngay.');
+        router.push('/Login');
       } else {
-        const msg = await res.text();
-        Alert.alert('Đăng ký thất bại', msg);
+        const data = await res.json();
+        // Check if error is about duplicate username
+        if (data.error && data.error.includes('tồn tại')) {
+          Alert.alert('Lỗi', 'Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác');
+        } else {
+          Alert.alert('Đăng ký thất bại', data.error || 'Vui lòng thử lại');
+        }
       }
-    } catch {
-      Alert.alert('Lỗi', 'Không thể kết nối server');
+    } catch (error) {
+      console.error('Register error:', error);
+      Alert.alert('Lỗi', 'Không thể kết nối server. Kiểm tra IP trong config/network.ts');
     }
     setLoading(false);
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Đăng ký</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Tên đăng nhập"
-        value={username}
-        onChangeText={setUsername}
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Mật khẩu"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Họ tên"
-        value={fullName}
-        onChangeText={setFullName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-      <Button title={loading ? 'Đang đăng ký...' : 'Đăng ký'} onPress={handleRegister} disabled={loading} />
-  <TouchableOpacity onPress={() => router.push('/Login')} style={styles.link}>
-        <Text style={styles.linkText}>Đã có tài khoản? Đăng nhập</Text>
-      </TouchableOpacity>
-    </View>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.logoSection}>
+        <View style={styles.logoCircle}>
+          <Text style={styles.logoEmoji}>🍬</Text>
+        </View>
+        <Text style={styles.brandName}>Candy Shop</Text>
+        <Text style={styles.brandTagline}>Kẹo ngon từ khắp nơi</Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.title}>Tạo tài khoản</Text>
+        <Text style={styles.subtitle}>Vui lòng điền thông tin của bạn</Text>
+        
+        <TextInput
+          style={styles.input}
+          placeholder="Họ và tên"
+          placeholderTextColor="#aaa"
+          value={fullName}
+          onChangeText={setFullName}
+          editable={!loading}
+        />
+        
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#aaa"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          editable={!loading}
+        />
+        
+        <TextInput
+          style={styles.input}
+          placeholder="Tên đăng nhập"
+          placeholderTextColor="#aaa"
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="none"
+          editable={!loading}
+        />
+        
+        <TextInput
+          style={styles.input}
+          placeholder="Mật khẩu"
+          placeholderTextColor="#aaa"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          editable={!loading}
+        />
+        
+        <TouchableOpacity 
+          style={[styles.button, loading && styles.buttonDisabled]} 
+          onPress={handleRegister}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>{loading ? 'Đang đăng ký...' : 'Đăng ký'}</Text>
+        </TouchableOpacity>
+
+        <View style={styles.divider} />
+        
+        <TouchableOpacity onPress={() => router.push('/Login')} disabled={loading}>
+          <View style={styles.loginSection}>
+            <Text style={styles.loginText}>Đã có tài khoản? </Text>
+            <Text style={styles.loginLink}>Đăng nhập ngay</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-// ...existing code...
   container: {
-    flex: 1,
+    flexGrow: 1,
+    backgroundColor: '#f0f2f5',
+    paddingHorizontal: 20,
+  },
+  contentContainer: {
+    paddingVertical: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f4f6fb',
+    minHeight: '100%',
+  },
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  logoCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#ffd700',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  logoEmoji: {
+    fontSize: 50,
+  },
+  brandName: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#ff69b4',
+    letterSpacing: 1,
+  },
+  brandTagline: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 8,
+    fontStyle: 'italic',
   },
   card: {
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 420,
     backgroundColor: '#fff',
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 32,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.15,
     shadowRadius: 16,
-    elevation: 8,
+    elevation: 10,
   },
   title: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#222',
-    marginBottom: 28,
+    marginBottom: 8,
     textAlign: 'center',
-    letterSpacing: 1,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 24,
   },
   input: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f5f5f5',
     borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 18,
+    borderColor: '#e0e0e0',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 14,
     color: '#222',
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#007bff',
-    borderRadius: 10,
-    paddingVertical: 14,
+    backgroundColor: '#ff69b4',
+    borderRadius: 12,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 8,
-    shadowColor: '#007bff',
+    marginTop: 12,
+    marginBottom: 16,
+    shadowColor: '#ff69b4',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: 5,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -131,8 +250,27 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 18,
-    letterSpacing: 1,
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e0e0e0',
+    marginVertical: 16,
+  },
+  loginSection: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loginText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  loginLink: {
+    fontSize: 14,
+    color: '#ff69b4',
+    fontWeight: 'bold',
   },
   link: {
     marginTop: 10,

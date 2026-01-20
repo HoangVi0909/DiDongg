@@ -73,24 +73,37 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.logoSection}>
+        <View style={styles.logoCircle}>
+          <Text style={styles.logoEmoji}>🍬</Text>
+        </View>
+        <Text style={styles.brandName}>Candy Shop</Text>
+        <Text style={styles.brandTagline}>Kẹo ngon từ khắp nơi</Text>
+      </View>
+
       <View style={styles.card}>
         <Text style={styles.title}>Đăng nhập</Text>
+        <Text style={styles.subtitle}>Vui lòng nhập thông tin của bạn</Text>
+        
         <TextInput
           style={styles.input}
           placeholder="Tên đăng nhập"
-          placeholderTextColor="#888"
+          placeholderTextColor="#999"
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
+          editable={!loading}
         />
         <TextInput
           style={styles.input}
           placeholder="Mật khẩu"
-          placeholderTextColor="#888"
+          placeholderTextColor="#999"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          editable={!loading}
         />
+        
         <TouchableOpacity
           style={[styles.button, loading && styles.buttonDisabled]}
           onPress={handleLogin}
@@ -98,8 +111,20 @@ export default function LoginScreen() {
         >
           <Text style={styles.buttonText}>{loading ? 'Đang đăng nhập...' : 'Đăng nhập'}</Text>
         </TouchableOpacity>
-  <TouchableOpacity onPress={() => router.push('/Register')} style={styles.link}>
-          <Text style={styles.linkText}>Chưa có tài khoản? <Text style={styles.linkHighlight}>Đăng ký</Text></Text>
+
+        <TouchableOpacity
+          onPress={() => router.push('/ForgotPasswordScreen')}
+          style={styles.forgotPasswordLink}
+          disabled={loading}
+        >
+          <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
+        </TouchableOpacity>
+
+        <View style={styles.divider} />
+
+        <TouchableOpacity onPress={() => router.push('/Register')} style={styles.registerSection}>
+          <Text style={styles.registerText}>Chưa có tài khoản? </Text>
+          <Text style={styles.registerLink}>Đăng ký ngay</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -111,50 +136,89 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f4f6fb',
+    backgroundColor: '#f0f2f5',
+    paddingHorizontal: 20,
+  },
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  logoCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#ffd700',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  logoEmoji: {
+    fontSize: 50,
+  },
+  brandName: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#ff69b4',
+    letterSpacing: 1,
+  },
+  brandTagline: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 8,
+    fontStyle: 'italic',
   },
   card: {
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 420,
     backgroundColor: '#fff',
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 32,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.15,
     shadowRadius: 16,
-    elevation: 8,
+    elevation: 10,
   },
   title: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#222',
-    marginBottom: 28,
+    marginBottom: 8,
     textAlign: 'center',
-    letterSpacing: 1,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    marginBottom: 24,
   },
   input: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f5f5f5',
     borderWidth: 1.5,
-    borderColor: '#d1d5db',
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 18,
+    borderColor: '#e0e0e0',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
     color: '#222',
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#007bff',
-    borderRadius: 10,
-    paddingVertical: 14,
+    backgroundColor: '#ff69b4',
+    borderRadius: 12,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 8,
-    shadowColor: '#007bff',
+    marginTop: 12,
+    marginBottom: 16,
+    shadowColor: '#ff69b4',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: 5,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -162,8 +226,38 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 18,
-    letterSpacing: 1,
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
+  forgotPasswordLink: {
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingVertical: 8,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    color: '#ff69b4',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e0e0e0',
+    marginVertical: 16,
+  },
+  registerSection: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  registerText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  registerLink: {
+    fontSize: 14,
+    color: '#ff69b4',
+    fontWeight: 'bold',
   },
   link: {
     marginTop: 10,

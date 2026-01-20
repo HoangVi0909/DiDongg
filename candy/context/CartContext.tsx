@@ -93,12 +93,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addToCart = (product: Product, quantity: number = 1) => {
     setCartItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.id === product.id);
+      const totalCurrentQuantity = prevItems.reduce((sum, item) => sum + item.quantity, 0);
+
+      // Check max cart limit (50 items total)
+      if (totalCurrentQuantity + quantity > 50) {
+        alert('Giỏ hàng chỉ có thể chứa tối đa 50 sản phẩm');
+        return prevItems;
+      }
       
       if (existingItem) {
         // Update quantity if item already exists
+        const newQuantity = existingItem.quantity + quantity;
+        if (newQuantity > 50) {
+          alert('Giỏ hàng chỉ có thể chứa tối đa 50 sản phẩm');
+          return prevItems;
+        }
         return prevItems.map((item) =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: newQuantity }
             : item
         );
       } else {
@@ -115,6 +127,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateQuantity = (productId: number, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(productId);
+      return;
+    }
+
+    if (quantity > 50) {
+      alert('Số lượng sản phẩm không thể vượt quá 50');
       return;
     }
     
@@ -134,7 +151,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const getCartCount = () => {
-    return cartItems.reduce((count, item) => count + item.quantity, 0);
+    // Return number of different products, not total quantity
+    return cartItems.length;
   };
 
   const addToFavorites = (product: Product) => {

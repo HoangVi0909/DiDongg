@@ -15,7 +15,7 @@ public class User {
     private String username;
     private String password;
 
-    @JsonProperty("full_name")
+    @JsonProperty(value = "fullName", access = JsonProperty.Access.WRITE_ONLY)
     private String fullName;
 
     private String email;
@@ -27,6 +27,9 @@ public class User {
     private Long roleId;
 
     private String role; // Display field
+
+    private String resetToken; // Mã xác nhận reset password
+    private Long resetTokenExpiry; // Thời gian hết hạn của token (timestamp)
 
     @Transient
     private Boolean active;
