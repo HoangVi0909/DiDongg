@@ -23,6 +23,7 @@ interface CartContextType {
   removeFromCart: (productId: number) => void;
   updateQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
+  resetCart: () => void;
   getCartTotal: () => number;
   getCartCount: () => number;
   addToFavorites: (product: Product) => void;
@@ -35,6 +36,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<Product[]>([]);
+  const [isResetting, setIsResetting] = useState(false);
 
   // Load cart from AsyncStorage on mount
   useEffect(() => {
@@ -42,14 +44,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadFavorites();
   }, []);
 
-  // Save cart to AsyncStorage whenever it changes
+  // Save cart to AsyncStorage whenever it changes (but not during reset)
   useEffect(() => {
-    saveCart();
+    if (!isResetting) {
+      saveCart();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartItems]);
 
-  // Save favorites to AsyncStorage whenever it changes
+  // Save favorites to AsyncStorage whenever it changes (but not during reset)
   useEffect(() => {
-    saveFavorites();
+    if (!isResetting) {
+      saveFavorites();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [favorites]);
 
   const loadCart = async () => {
@@ -146,6 +154,28 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCartItems([]);
   };
 
+  const resetCart = async () => {
+    // Reset cart và favorites khi logout/đổi tài khoản
+    console.log('🗑️ RESET CART START');
+    setIsResetting(true); // Prevent auto-save during reset
+    
+    try {
+      // Clear AsyncStorage first
+      await AsyncStorage.multiRemove(['@cart', '@favorites']);
+      console.log('✅ AsyncStorage cleared');
+      
+      // Then clear state
+      setCartItems([]);
+      setFavorites([]);
+      console.log('✅ State cleared');
+    } catch (error) {
+      console.error('❌ Error during resetCart:', error);
+    } finally {
+      setIsResetting(false); // Re-enable auto-save
+      console.log('🗑️ RESET CART DONE');
+    }
+  };
+
   const getCartTotal = () => {
     return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
   };
@@ -183,6 +213,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         removeFromCart,
         updateQuantity,
         clearCart,
+        resetCart,
         getCartTotal,
         getCartCount,
         addToFavorites,

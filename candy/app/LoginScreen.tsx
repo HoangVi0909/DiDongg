@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { getApiUrl, logNetworkConfig } from '../config/network';
+import { useCart } from '../context/CartContext';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { resetCart } = useCart();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,6 +37,11 @@ export default function LoginScreen() {
         try {
           const user = JSON.parse(text);
           console.log('✅ User response:', user);
+          
+          // Reset cart khi login (đổi tài khoản) - phải chờ xong
+          console.log('🗑️ Resetting cart...');
+          await resetCart();
+          console.log('✅ Cart reset done!');
           
           // Phân quyền theo role
           if (user && user.role) {
