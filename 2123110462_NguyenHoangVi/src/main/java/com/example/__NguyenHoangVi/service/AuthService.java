@@ -73,6 +73,22 @@ public class AuthService {
     }
 
     // Verify reset token và đổi mật khẩu
+    public String verifyResetToken(String resetToken) {
+        Optional<User> userOpt = userRepo.findByResetToken(resetToken);
+        if (userOpt.isEmpty()) {
+            return "Token không hợp lệ";
+        }
+
+        User user = userOpt.get();
+
+        // Kiểm tra hết hạn
+        if (user.getResetTokenExpiry() == null || System.currentTimeMillis() > user.getResetTokenExpiry()) {
+            return "Token đã hết hạn";
+        }
+
+        return "Token hợp lệ"; // Token valid
+    }
+
     public String resetPassword(String resetToken, String newPassword) {
         Optional<User> userOpt = userRepo.findByResetToken(resetToken);
         if (userOpt.isEmpty()) {

@@ -64,6 +64,30 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    // POST http://localhost:8080/api/auth/verify-token
+    @PostMapping("/verify-token")
+    public ResponseEntity<?> verifyToken(@RequestBody Map<String, String> req) {
+        String resetToken = req.get("resetToken");
+
+        if (resetToken == null || resetToken.isEmpty()) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Thiếu mã xác nhận");
+            return ResponseEntity.status(400).body(error);
+        }
+
+        String result = authService.verifyResetToken(resetToken);
+
+        if (result.contains("không hợp lệ") || result.contains("hết hạn")) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", result);
+            return ResponseEntity.status(400).body(error);
+        }
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", result);
+        return ResponseEntity.ok(response);
+    }
+
     // POST http://localhost:8080/api/auth/reset-password
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> req) {

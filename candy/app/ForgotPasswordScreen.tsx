@@ -49,10 +49,10 @@ export default function ForgotPasswordScreen() {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${getApiUrl()}/auth/reset-password`, {
+      const res = await fetch(`${getApiUrl()}/auth/verify-token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resetToken: resetToken.trim(), newPassword: 'temp' })
+        body: JSON.stringify({ resetToken: resetToken.trim() })
       });
       const data = await res.json();
       if (data.error && data.error.includes('hết hạn')) {
@@ -60,9 +60,11 @@ export default function ForgotPasswordScreen() {
         setStep(1);
       } else if (data.error && data.error.includes('không hợp lệ')) {
         Alert.alert('Lỗi', 'Mã xác nhận không đúng.');
-      } else {
+      } else if (res.ok) {
         Alert.alert('✅ Xác nhận mã thành công', 'Nhập mật khẩu mới');
         setStep(3);
+      } else {
+        Alert.alert('Lỗi', data.error || 'Xác nhận mã thất bại');
       }
     } catch (error) {
       Alert.alert('Lỗi', 'Không thể kết nối server');
