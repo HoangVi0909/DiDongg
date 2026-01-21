@@ -26,7 +26,7 @@ export default function CheckoutScreen() {
   const [address, setAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [showQRModal, setShowQRModal] = useState(false);
-  const [transactionCode, setTransactionCode] = useState('');
+  const [orderId, setOrderId] = useState<number | null>(null);
 
   // Thông tin ngân hàng của bạn
   const BANK_INFO = {
@@ -79,49 +79,53 @@ export default function CheckoutScreen() {
         })),
       };
 
+      console.log('📤 Creating order with data:', orderData);
+      console.log('🌐 API URL:', `${getApiUrl()}/orders`);
+
       // Gọi API tạo đơn hàng
-      const res = await fetch(`${getApiUrl()}/orders`, {
+      const res = await fetch(`${getApiUrl()}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData),
       });
 
+      console.log('📥 Response status:', res.status);
+      const responseData = await res.json();
+      console.log('📥 Response data:', responseData);
+
       if (res.ok) {
+        setOrderId(responseData.orderId);
         clearCart();
-        showToast('✅ Đặt hàng thành công! Cảm ơn bạn!', 'success');
-        setTimeout(() => {
-          router.push('/Orders' as any);
-        }, 2000);
+        
+        if (method === 'BANK') {
+          showToast('📦 Vui lòng hoàn tất thanh toán!', 'info');
+        } else {
+          showToast('✅ Đặt hàng thành công! Cảm ơn bạn!', 'success');
+          setTimeout(() => {
+            router.push('/Orders' as any);
+          }, 2000);
+        }
       } else {
-        throw new Error('Không thể tạo đơn hàng');
+        throw new Error(`API error: ${responseData.error || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('Error creating order:', error);
+      console.error('❌ Error creating order:', error);
       showToast('❌ Không thể tạo đơn hàng. Vui lòng thử lại!', 'error');
     }
   };
 
-  const handlePaymentConfirm = () => {
-    Alert.prompt(
-      'Xác nhận thanh toán',
-      'Vui lòng nhập mã giao dịch từ ngân hàng (6-10 ký tự):',
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Xác nhận',
-          onPress: async (code?: string) => {
-            if (!code || code.trim().length < 6) {
-              Alert.alert('Lỗi', 'Mã giao dịch không hợp lệ. Vui lòng nhập ít nhất 6 ký tự!');
-              return;
-            }
-            setTransactionCode(code.trim());
-            setShowQRModal(false);
-            await createOrder('BANK', 'paid', code.trim());
-          },
-        },
-      ],
-      'plain-text'
-    );
+  const handlePaymentConfirm = async () => {
+    setShowQRModal(false);
+    showToast('✅ Đã chuyển khoản', 'success');
+    showToast('📝 Đơn hàng đang chờ xác nhận từ shop...', 'info');
+    
+    // Tạo đơn hàng với trạng thái pending
+    await createOrder('BANK', 'pending', 'online_payment');
+    
+    // Chuyển hướng sau 2 giây
+    setTimeout(() => {
+      router.push('/Orders' as any);
+    }, 2000);
   };
 
   return (
@@ -264,21 +268,21 @@ export default function CheckoutScreen() {
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Số tiền:</Text>
               <Text style={[styles.infoValue, styles.amountText]}>
-                ₫{(getCartTotal() + 30000).toLocaleString()}
+                ₫{finalTotal.toLocaleString()}
               </Text>
             </View>
           </View>
 
           <Text style={styles.instructionText}>
             📱 Mở app ngân hàng → Quét QR → Xác nhận thanh toán{'\n'}
-            💡 Sau khi chuyển tiền, bạn sẽ nhận được mã giao dịch từ ngân hàng
+            💡 Sau khi chuyển tiền, nhấn nút dưới để xác nhận
           </Text>
 
           <TouchableOpacity
             style={styles.confirmButton}
             onPress={handlePaymentConfirm}
           >
-            <Text style={styles.confirmButtonText}>Nhập mã giao dịch</Text>
+            <Text style={styles.confirmButtonText}>✅ Đã chuyển khoản</Text>
           </TouchableOpacity>
         </View>
       </View>

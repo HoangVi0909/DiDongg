@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,61 +6,185 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { getApiUrl } from '../config/network';
+
+interface Order {
+  id: number;
+  customerName: string;
+  phone: string;
+  address: string;
+  totalAmount: number;
+  paymentMethod: string;
+  status: string;
+  transactionCode?: string;
+  createdAt?: string;
+}
 
 export default function OrdersScreen() {
-  // Mock data - sau này sẽ fetch từ API
-  const [orders] = useState([
-    {
-      id: 1,
-      orderNumber: 'DH001',
-      date: '2026-01-05',
-      total: 450000,
-      status: 'Đang giao',
-      items: 3,
-    },
-    {
-      id: 2,
-      orderNumber: 'DH002',
-      date: '2026-01-03',
-      total: 280000,
-      status: 'Đã giao',
-      items: 2,
-    },
-  ]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Đang giao':
-        return '#ff9800';
-      case 'Đã giao':
-        return '#4caf50';
-      case 'Đã hủy':
-        return '#f44336';
-      default:
-        return '#666';
+  // Fetch orders khi màn hình được focus
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchOrders();
+      
+      // Polling: kiểm tra cập nhật mỗi 3 giây
+      const pollingInterval = setInterval(() => {
+        fetchOrders();
+      }, 3000);
+
+      return () => {
+        clearInterval(pollingInterval);
+      };
+    }, [])
+  );
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${getApiUrl()}/api/orders`);
+      if (res.ok) {
+        const data = await res.json();
+        const ordersArray = Array.isArray(data) ? data : data.orders || [];
+        const sortedOrders = ordersArray.sort((a: Order, b: Order) => b.id - a.id);
+        
+        // Kiểm tra xem có đơn hàng nào được xác nhận không
+        setOrders((prevOrders) => {
+          const hasStatusUpdates = sortedOrders.some((newOrder: Order) => {
+            const oldOrder = prevOrders.find((o) => o.id === newOrder.id);
+            return oldOrder && oldOrder.status !== newOrder.status;
+          });
+
+          // Nếu có cập nhật trạng thái, hiển thị notification
+          if (hasStatusUpdates) {
+            sortedOrders.forEach((newOrder: Order) => {
+              const oldOrder = prevOrders.find((o) => o.id === newOrder.id);
+              if (oldOrder && oldOrder.status !== newOrder.status && newOrder.status === 'confirmed') {
+                Alert.alert(
+                  '✅ Đơn hàng đã được xác nhận!',
+                  `Đơn hàng #${newOrder.id} của bạn đã được shop xác nhận. Chuẩn bị giao hàng...`
+                );
+              }
+            });
+          }
+
+          return sortedOrders;
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  const renderOrder = ({ item }: { item: any }) => (
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchOrders();
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return '#f59e0b';
+      case 'confirmed':
+        return '#10b981';
+      case 'shipped':
+        return '#3b82f6';
+      case 'delivered':
+        return '#8b5cf6';
+      default:
+        return '#6b7280';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'Chờ xác nhận';
+      case 'confirmed':
+        return 'Đã xác nhận';
+      case 'shipped':
+        return 'Đang giao';
+      case 'delivered':
+        return 'Đã giao';
+      default:
+        return status;
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(amount);
+  };
+
+  const renderOrder = ({ item }: { item: Order }) => (
     <TouchableOpacity
       style={styles.orderCard}
-      onPress={() => Alert.alert('Chi tiết đơn hàng', `Đơn hàng: ${item.orderNumber}`)}
+      onPress={() => {
+        Alert.alert(
+          `Đơn hàng #${item.id}`,
+          `Khách: ${item.customerName}\nSĐT: ${item.phone}\nĐịa chỉ: ${item.address}\nTổng: ${formatCurrency(item.totalAmount)}\nTrạng thái: ${getStatusLabel(item.status)}`,
+          [{ text: 'Đóng' }]
+        );
+      }}
     >
       <View style={styles.orderHeader}>
-        <Text style={styles.orderNumber}>#{item.orderNumber}</Text>
-        <Text style={[styles.status, { color: getStatusColor(item.status) }]}>
-          {item.status}
-        </Text>
+        <View>
+          <Text style={styles.orderNumber}>Đơn hàng #{item.id}</Text>
+          <Text style={styles.customerInfo}>{item.customerName}</Text>
+        </View>
+        <View
+          style={[
+            styles.statusBadge,
+            {
+              backgroundColor: getStatusColor(item.status),
+            },
+          ]}
+        >
+          <Text style={styles.statusText}>{getStatusLabel(item.status)}</Text>
+        </View>
       </View>
-      <Text style={styles.orderDate}>Ngày đặt: {item.date}</Text>
-      <Text style={styles.orderItems}>{item.items} sản phẩm</Text>
+      <View style={styles.orderDetails}>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Phương thức:</Text>
+          <Text style={styles.detailValue}>
+            {item.paymentMethod === 'COD' ? 'Thanh toán khi nhận' : 'Chuyển khoản'}
+          </Text>
+        </View>
+        {item.transactionCode && (
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Mã giao dịch:</Text>
+            <Text style={[styles.detailValue, styles.transactionCode]}>
+              {item.transactionCode}
+            </Text>
+          </View>
+        )}
+      </View>
       <View style={styles.orderFooter}>
         <Text style={styles.totalLabel}>Tổng tiền:</Text>
-        <Text style={styles.totalAmount}>₫{item.total.toLocaleString()}</Text>
+        <Text style={styles.totalAmount}>{formatCurrency(item.totalAmount)}</Text>
       </View>
     </TouchableOpacity>
   );
+
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+        <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
+      </View>
+    );
+  }
 
   if (orders.length === 0) {
     return (
@@ -78,6 +202,8 @@ export default function OrdersScreen() {
         renderItem={renderOrder}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContainer}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
@@ -87,6 +213,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+    backgroundColor: '#f5f5f5',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#6b7280',
   },
   listContainer: {
     padding: 12,
@@ -105,17 +243,57 @@ const styles = StyleSheet.create({
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
   orderNumber: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  customerInfo: {
+    fontSize: 13,
+    color: '#6b7280',
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
   status: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  statusText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  orderDetails: {
+    paddingVertical: 8,
+    paddingHorizontal: 0,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  detailLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  detailValue: {
+    fontSize: 12,
+    color: '#1f2937',
+    fontWeight: '600',
+  },
+  transactionCode: {
+    fontFamily: 'monospace',
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   orderDate: {
     fontSize: 14,
@@ -133,22 +311,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: '#e5e7eb',
   },
   totalLabel: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 13,
+    color: '#6b7280',
   },
   totalAmount: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#ee4d2d',
+    color: '#10b981',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
   },
   emptyIcon: {
     fontSize: 64,
