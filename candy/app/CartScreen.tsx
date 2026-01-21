@@ -109,12 +109,6 @@ export default function CartScreen() {
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyIcon}>🛒</Text>
         <Text style={styles.emptyText}>Giỏ hàng của bạn đang trống</Text>
-        <TouchableOpacity
-          style={styles.shopNowButton}
-          onPress={() => router.push('/ProductList' as any)}
-        >
-          <Text style={styles.shopNowText}>Mua sắm ngay</Text>
-        </TouchableOpacity>
       </View>
     );
   }

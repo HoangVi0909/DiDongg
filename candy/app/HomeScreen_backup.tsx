@@ -45,7 +45,7 @@ export default function HomeScreen() {
   };
 
   const renderCategoryItem = ({ item }: { item: Category }) => (
-    <TouchableOpacity style={styles.categoryItem} onPress={() => router.push('/ProductList' as any)}>
+    <TouchableOpacity style={styles.categoryItem} onPress={() => router.push('/Customer' as any)}>
       <Text style={styles.categoryEmoji}>{item.emoji}</Text>
       <Text style={styles.categoryName}>{item.name}</Text>
     </TouchableOpacity>
@@ -119,7 +119,7 @@ export default function HomeScreen() {
       {/* Featured Products */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>🔥 Nổi bật</Text>
-        <TouchableOpacity onPress={() => router.push('/ProductList' as any)}>
+        <TouchableOpacity onPress={() => router.push('/Customer' as any)}>
           <Text style={styles.seeAllLink}>Xem tất cả</Text>
         </TouchableOpacity>
       </View>

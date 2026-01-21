@@ -80,7 +80,7 @@ export default function CustomerScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Sản phẩm nổi bật</Text>
-            <TouchableOpacity onPress={() => router.push('/ProductList' as any)}>
+            <TouchableOpacity onPress={() => router.push('/Customer' as any)}>
               <Text style={styles.seeAll}>Xem tất cả →</Text>
             </TouchableOpacity>
           </View>

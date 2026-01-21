@@ -104,7 +104,7 @@ export default function HomeScreen() {
     <View style={styles.container}>
       {/* Header với Search */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.searchBar} onPress={() => router.push('/ProductList' as any)}>
+        <TouchableOpacity style={styles.searchBar} onPress={() => router.push('/Customer' as any)}>
           <Text style={styles.searchIcon}>🔍</Text>
           <Text style={styles.searchPlaceholder}>Tìm kiếm kẹo, nước...</Text>
         </TouchableOpacity>

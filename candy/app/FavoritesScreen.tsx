@@ -61,12 +61,6 @@ export default function FavoritesScreen() {
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyIcon}>❤️</Text>
         <Text style={styles.emptyText}>Chưa có sản phẩm yêu thích</Text>
-        <TouchableOpacity
-          style={styles.shopButton}
-          onPress={() => router.push('/ProductList' as any)}
-        >
-          <Text style={styles.shopButtonText}>Khám phá ngay</Text>
-        </TouchableOpacity>
       </View>
     );
   }

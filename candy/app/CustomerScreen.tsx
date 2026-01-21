@@ -16,13 +16,12 @@ interface Category {
 
 export default function CustomerScreen() {
   const router = useRouter();
-  const { addToCart, getCartCount } = useCart();
+  const { addToCart, getCartCount, addToFavorites, removeFromFavorites, isFavorite } = useCart();
   const { showToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [searchText, setSearchText] = useState('');
-  const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [minPrice, setMinPrice] = useState('');
@@ -76,14 +75,16 @@ export default function CustomerScreen() {
 
   const cartCount = getCartCount();
 
-  const toggleFavorite = (productId: number) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(productId)) {
-      newFavorites.delete(productId);
+  const toggleFavorite = (product: Product) => {
+    const productName = product.name;
+    
+    if (isFavorite(product.id)) {
+      removeFromFavorites(product.id);
+      showToast(`❌ Đã xóa "${productName}" khỏi yêu thích`, 'info');
     } else {
-      newFavorites.add(productId);
+      addToFavorites(product);
+      showToast(`❤️ Đã thêm "${productName}" vào yêu thích!`, 'success');
     }
-    setFavorites(newFavorites);
   };
 
   const getCategoryName = () => {
@@ -114,10 +115,10 @@ export default function CustomerScreen() {
           style={styles.favoriteBadge}
           onPress={(e) => {
             e.stopPropagation();
-            toggleFavorite(item.id);
+            toggleFavorite(item);
           }}
         >
-          <Text style={styles.favoriteBadgeText}>{favorites.has(item.id) ? '❤️' : '🤍'}</Text>
+          <Text style={styles.favoriteBadgeText}>{isFavorite(item.id) ? '❤️' : '🤍'}</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.productInfo}>
