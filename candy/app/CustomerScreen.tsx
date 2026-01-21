@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, FlatList, Dimensions, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, FlatList, Dimensions, TextInput, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getApiUrl } from '../config/network';
 import { useCart, Product } from '../context/CartContext';
@@ -21,6 +21,10 @@ export default function CustomerScreen() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [searchText, setSearchText] = useState('');
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showPriceModal, setShowPriceModal] = useState(false);
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
 
   const categories: Category[] = [
     { id: 1, name: 'Kẹo', emoji: '🍬' },
@@ -57,6 +61,10 @@ export default function CustomerScreen() {
         const categoryId = (p as any).category_id || p.categoryId;
         if (categoryId !== selectedCategory) return false;
       }
+      // Filter by price range
+      const min = minPrice ? parseInt(minPrice) : 0;
+      const max = maxPrice ? parseInt(maxPrice) : Infinity;
+      if (p.price < min || p.price > max) return false;
       // Filter by search text
       if (searchText.trim() !== '') {
         return p.name.toLowerCase().includes(searchText.toLowerCase());
@@ -76,17 +84,18 @@ export default function CustomerScreen() {
     setFavorites(newFavorites);
   };
 
-  const renderCategoryItem = ({ item }: { item: Category }) => (
-    <TouchableOpacity 
-      style={[styles.categoryItem, selectedCategory === item.id && styles.categoryItemActive]}
-      onPress={() => setSelectedCategory(selectedCategory === item.id ? null : item.id)}
-    >
-      <Text style={styles.categoryEmoji}>{item.emoji}</Text>
-      <Text style={[styles.categoryName, selectedCategory === item.id && styles.categoryNameActive]}>
-        {item.name}
-      </Text>
-    </TouchableOpacity>
-  );
+  const getCategoryName = () => {
+    if (selectedCategory === null) return 'Tất cả danh mục';
+    const cat = categories.find(c => c.id === selectedCategory);
+    return cat ? `${cat.emoji} ${cat.name}` : 'Tất cả danh mục';
+  };
+
+  const getPriceRangeText = () => {
+    if (!minPrice && !maxPrice) return 'Tất cả giá';
+    if (minPrice && !maxPrice) return `₫${parseInt(minPrice).toLocaleString()}+`;
+    if (!minPrice && maxPrice) return `Dưới ₫${parseInt(maxPrice).toLocaleString()}`;
+    return `₫${parseInt(minPrice).toLocaleString()} - ₫${parseInt(maxPrice).toLocaleString()}`;
+  };
 
   const renderProductItem = ({ item }: { item: Product }) => (
     <TouchableOpacity
@@ -162,17 +171,141 @@ export default function CustomerScreen() {
         )}
       </View>
 
-      {/* Categories Horizontal */}
-      <FlatList
-        data={categories}
-        renderItem={renderCategoryItem}
-        keyExtractor={(item) => item.id.toString()}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoriesContainer}
-        scrollEnabled={true}
-        nestedScrollEnabled={true}
-      />
+      {/* Filter Section - Dropdowns */}
+      <View style={styles.filterContainer}>
+        {/* Category Dropdown */}
+        <TouchableOpacity 
+          style={styles.filterButton}
+          onPress={() => setShowCategoryModal(true)}
+        >
+          <Text style={styles.filterButtonText}>📂 {getCategoryName()}</Text>
+          <Text style={styles.filterDropdownIcon}>▼</Text>
+        </TouchableOpacity>
+
+        {/* Price Dropdown */}
+        <TouchableOpacity 
+          style={styles.filterButton}
+          onPress={() => setShowPriceModal(true)}
+        >
+          <Text style={styles.filterButtonText}>💰 {getPriceRangeText()}</Text>
+          <Text style={styles.filterDropdownIcon}>▼</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Category Modal */}
+      <Modal
+        visible={showCategoryModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCategoryModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowCategoryModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Chọn danh mục</Text>
+              <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
+                <Text style={styles.modalCloseBtn}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.categoryOption, selectedCategory === null && styles.categoryOptionActive]}
+              onPress={() => {
+                setSelectedCategory(null);
+                setShowCategoryModal(false);
+              }}
+            >
+              <Text style={[styles.categoryOptionText, selectedCategory === null && styles.categoryOptionTextActive]}>
+                ✓ Tất cả danh mục
+              </Text>
+            </TouchableOpacity>
+
+            {categories.map(cat => (
+              <TouchableOpacity 
+                key={cat.id}
+                style={[styles.categoryOption, selectedCategory === cat.id && styles.categoryOptionActive]}
+                onPress={() => {
+                  setSelectedCategory(cat.id);
+                  setShowCategoryModal(false);
+                }}
+              >
+                <Text style={[styles.categoryOptionText, selectedCategory === cat.id && styles.categoryOptionTextActive]}>
+                  {selectedCategory === cat.id ? '✓ ' : '  '}{cat.emoji} {cat.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Price Modal */}
+      <Modal
+        visible={showPriceModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPriceModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowPriceModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Lọc theo giá</Text>
+              <TouchableOpacity onPress={() => setShowPriceModal(false)}>
+                <Text style={styles.modalCloseBtn}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.priceInputGroup}>
+              <Text style={styles.priceLabel}>Giá tối thiểu (₫)</Text>
+              <TextInput
+                style={styles.priceInput}
+                placeholder="0"
+                placeholderTextColor="#ccc"
+                keyboardType="numeric"
+                value={minPrice}
+                onChangeText={setMinPrice}
+              />
+            </View>
+
+            <View style={styles.priceInputGroup}>
+              <Text style={styles.priceLabel}>Giá tối đa (₫)</Text>
+              <TextInput
+                style={styles.priceInput}
+                placeholder="999999999"
+                placeholderTextColor="#ccc"
+                keyboardType="numeric"
+                value={maxPrice}
+                onChangeText={setMaxPrice}
+              />
+            </View>
+
+            <View style={styles.modalButtonGroup}>
+              <TouchableOpacity 
+                style={styles.modalButtonClear}
+                onPress={() => {
+                  setMinPrice('');
+                  setMaxPrice('');
+                }}
+              >
+                <Text style={styles.modalButtonClearText}>Xóa lọc</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.modalButtonApply}
+                onPress={() => setShowPriceModal(false)}
+              >
+                <Text style={styles.modalButtonApplyText}>Áp dụng</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Products Grid */}
       {loading ? (
@@ -296,38 +429,134 @@ const styles = StyleSheet.create({
     color: '#ccc',
     paddingHorizontal: 4,
   },
-  categoriesContainer: {
-    paddingHorizontal: 6,
-    paddingVertical: 8,
-    gap: 4,
+  filterContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 10,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  categoryItem: {
+  filterButton: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    justifyContent: 'space-between',
     backgroundColor: '#f5f5f5',
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: '#f5f5f5',
-    minWidth: 65,
-    height: 44,
-    justifyContent: 'center',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
-  categoryItemActive: {
-    backgroundColor: '#ff6b35',
-    borderColor: '#ff6b35',
+  filterButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
   },
-  categoryEmoji: {
-    fontSize: 20,
-    marginBottom: 1,
-  },
-  categoryName: {
+  filterDropdownIcon: {
     fontSize: 10,
     color: '#666',
-    fontWeight: '600',
-    textAlign: 'center',
+    marginLeft: 8,
   },
-  categoryNameActive: {
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalCloseBtn: {
+    fontSize: 20,
+    color: '#999',
+  },
+  categoryOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#f0f0f0',
+  },
+  categoryOptionActive: {
+    backgroundColor: '#fff3e0',
+  },
+  categoryOptionText: {
+    fontSize: 15,
+    color: '#333',
+    fontWeight: '500',
+  },
+  categoryOptionTextActive: {
+    color: '#ff6b35',
+    fontWeight: '700',
+  },
+  priceInputGroup: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  priceLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  priceInput: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#333',
+  },
+  modalButtonGroup: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    gap: 10,
+  },
+  modalButtonClear: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ff6b35',
+    alignItems: 'center',
+  },
+  modalButtonClearText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ff6b35',
+  },
+  modalButtonApply: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#ff6b35',
+    alignItems: 'center',
+  },
+  modalButtonApplyText: {
+    fontSize: 14,
+    fontWeight: '700',
     color: '#fff',
   },
   loadingContainer: {
