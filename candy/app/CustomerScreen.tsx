@@ -175,6 +175,26 @@ export default function CustomerScreen() {
         )}
       </View>
 
+      {/* Quick Access Features */}
+      <View style={styles.quickAccessContainer}>
+        <TouchableOpacity style={styles.quickAccessBtn} onPress={() => router.push('/Voucher' as any)}>
+          <Text style={styles.quickAccessBtnIcon}>🎟️</Text>
+          <Text style={styles.quickAccessBtnText}>Voucher</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.quickAccessBtn} onPress={() => router.push('/Review' as any)}>
+          <Text style={styles.quickAccessBtnIcon}>⭐</Text>
+          <Text style={styles.quickAccessBtnText}>Đánh giá</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.quickAccessBtn} onPress={() => router.push('/Notification' as any)}>
+          <Text style={styles.quickAccessBtnIcon}>🔔</Text>
+          <Text style={styles.quickAccessBtnText}>Thông báo</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.quickAccessBtn} onPress={() => router.push('/Address' as any)}>
+          <Text style={styles.quickAccessBtnIcon}>📍</Text>
+          <Text style={styles.quickAccessBtnText}>Địa chỉ</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Filter Section - Dropdowns */}
       <View style={styles.filterContainer}>
         {/* Category Dropdown */}
@@ -427,6 +447,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#222',
     paddingVertical: 6,
+  },
+  quickAccessContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    backgroundColor: '#f9f9f9',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  quickAccessBtn: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+  },
+  quickAccessBtnIcon: {
+    fontSize: 24,
+  },
+  quickAccessBtnText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
   },
   clearIcon: {
     fontSize: 16,

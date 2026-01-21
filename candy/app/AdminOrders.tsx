@@ -9,11 +9,14 @@ import {
   RefreshControl,
   Alert,
   Modal,
-  Pressable
+  Pressable,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getApiUrl } from '../config/network';
 import { useToast } from '../context/ToastContext';
+
+const isWeb = Platform.OS === 'web';
 
 interface Order {
   id: number;
@@ -39,6 +42,15 @@ export default function AdminOrders() {
   const [confirming, setConfirming] = useState(false);
   const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'all'>('pending');
   const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  const menuItems = [
+    { id: 1, title: 'Trang chu', icon: '', route: '/AdminScreen' },
+    { id: 2, title: 'Menu', icon: '', route: '#' },
+    { id: 3, title: 'San pham', icon: '', route: '/AdminProductsScreen' },
+    { id: 9, title: 'Don hang', icon: '', route: '/AdminOrders' },
+    { id: 4, title: 'Voucher', icon: '', route: '/AdminVouchersScreen' },
+    { id: 5, title: 'Nguoi dung', icon: '', route: '/AdminUsersScreen' },
+  ];
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -230,7 +242,10 @@ export default function AdminOrders() {
   };
 
   return (
-    <View style={styles.container}>
+    isWeb ? (
+      <View style={styles.containerWeb}>
+        <Sidebar menuItems={menuItems} router={router} />
+        <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -496,11 +511,239 @@ export default function AdminOrders() {
           </View>
         </View>
       </Modal>
+        </View>
+      </View>
+    ) : (
+      <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={styles.backButton}>← Quay lại</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Quản lý đơn hàng</Text>
+      </View>
+
+      {/* Tabs */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'pending' && styles.activeTab]}
+          onPress={() => setActiveTab('pending')}
+        >
+          <Text style={[styles.tabText, activeTab === 'pending' && styles.activeTabText]}>
+            Chờ xác nhận ({allOrders.filter(o => o.status === 'pending').length})
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'confirmed' && styles.activeTab]}
+          onPress={() => setActiveTab('confirmed')}
+        >
+          <Text style={[styles.tabText, activeTab === 'confirmed' && styles.activeTabText]}>
+            Đã xác nhận ({allOrders.filter(o => o.status === 'confirmed').length})
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'all' && styles.activeTab]}
+          onPress={() => setActiveTab('all')}
+        >
+          <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>
+            Tất cả ({allOrders.length})
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Orders List */}
+      <ScrollView
+        style={styles.content}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+        showsVerticalScrollIndicator={false}
+      >
+        {loading ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color="#3b82f6" />
+            <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>
+          </View>
+        ) : orders.length === 0 ? (
+          <View style={styles.centerContainer}>
+            <Text style={styles.emptyText}>Không có đơn hàng nào</Text>
+          </View>
+        ) : (
+          <>
+            {orders.map((order, idx) => (
+              <TouchableOpacity
+                key={order.id}
+                style={styles.orderCard}
+                onPress={() => {
+                  setSelectedOrder(order);
+                  setModalVisible(true);
+                }}
+              >
+                <View style={styles.orderHeader}>
+                  <Text style={styles.orderNumber}>Đơn #{idx + 1}</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
+                    <Text style={styles.statusText}>{getStatusLabel(order.status)}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.orderInfo}>
+                  <Text style={styles.orderInfoLabel}>Khách hàng:</Text>
+                  <Text style={styles.orderInfoValue}>{order.customerName}</Text>
+                </View>
+                <View style={styles.orderInfo}>
+                  <Text style={styles.orderInfoLabel}>Điện thoại:</Text>
+                  <Text style={styles.orderInfoValue}>{order.phone}</Text>
+                </View>
+                <View style={styles.orderInfo}>
+                  <Text style={styles.orderInfoLabel}>Địa chỉ:</Text>
+                  <Text style={styles.orderInfoValue} numberOfLines={2}>
+                    {order.address}
+                  </Text>
+                </View>
+                <View style={styles.orderInfo}>
+                  <Text style={styles.orderInfoLabel}>Tổng tiền:</Text>
+                  <Text style={styles.orderInfoValue}>{formatCurrency(order.totalAmount)}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
+      </ScrollView>
+
+      {/* Order Detail Modal */}
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+
+            {selectedOrder && (
+              <>
+                <Text style={styles.modalTitle}>Chi tiết đơn hàng</Text>
+
+                <ScrollView style={styles.modalBody}>
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailLabel}>Mã đơn hàng:</Text>
+                    <Text style={styles.detailValue}>#{selectedOrder.id}</Text>
+                  </View>
+
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailLabel}>Trạng thái:</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(selectedOrder.status), alignSelf: 'flex-start' }]}>
+                      <Text style={styles.statusText}>{getStatusLabel(selectedOrder.status)}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailLabel}>Khách hàng:</Text>
+                    <Text style={styles.detailValue}>{selectedOrder.customerName}</Text>
+                  </View>
+
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailLabel}>Điện thoại:</Text>
+                    <Text style={styles.detailValue}>{selectedOrder.phone}</Text>
+                  </View>
+
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailLabel}>Địa chỉ:</Text>
+                    <Text style={styles.detailValue}>{selectedOrder.address}</Text>
+                  </View>
+
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailLabel}>Hình thức thanh toán:</Text>
+                    <Text style={styles.detailValue}>{getPaymentMethodLabel(selectedOrder.paymentMethod)}</Text>
+                  </View>
+
+                  {selectedOrder.transactionCode && (
+                    <View style={styles.detailSection}>
+                      <Text style={styles.detailLabel}>Mã giao dịch:</Text>
+                      <Text style={styles.detailValue}>{selectedOrder.transactionCode}</Text>
+                    </View>
+                  )}
+
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailLabel}>Tổng tiền:</Text>
+                    <Text style={styles.detailValueAmount}>{formatCurrency(selectedOrder.totalAmount)}</Text>
+                  </View>
+
+                  {selectedOrder.createdAt && (
+                    <View style={styles.detailSection}>
+                      <Text style={styles.detailLabel}>Ngày tạo:</Text>
+                      <Text style={styles.detailValue}>{new Date(selectedOrder.createdAt).toLocaleString('vi-VN')}</Text>
+                    </View>
+                  )}
+
+                  <View style={styles.modalActions}>
+                    {selectedOrder.status === 'pending' && (
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.confirmButton]}
+                        onPress={() => handleConfirmPayment(selectedOrder.id)}
+                        disabled={confirming}
+                      >
+                        <Text style={styles.actionButtonText}>{confirming ? 'Đang xác nhận...' : 'Xác nhận thanh toán'}</Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {selectedOrder.status !== 'cancelled' && (
+                      <Pressable
+                        style={styles.statusUpdateButton}
+                        onPress={() => {
+                          Alert.alert('Cập nhật trạng thái', 'Chọn trạng thái mới:', [
+                            { text: 'Pending', onPress: () => handleUpdateStatus(selectedOrder.id, 'pending') },
+                            { text: 'Confirmed', onPress: () => handleUpdateStatus(selectedOrder.id, 'confirmed') },
+                            { text: 'Cancelled', onPress: () => handleUpdateStatus(selectedOrder.id, 'cancelled') },
+                            { text: 'Hủy', style: 'cancel' },
+                          ]);
+                        }}
+                        disabled={updatingStatus}
+                      >
+                        <Text style={styles.actionButtonText}>{updatingStatus ? 'Đang cập nhật...' : 'Cập nhật trạng thái'}</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                </ScrollView>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+    </View>
+    )
+  );
+}
+
+function Sidebar({ menuItems, router }: any) {
+  return (
+    <View style={styles.sidebar}>
+      <View style={styles.sidebarHeader}>
+        <Text style={styles.sidebarTitle}>Admin</Text>
+        <Text style={styles.sidebarStatus}> Online</Text>
+      </View>
+      <Text style={styles.menuLabel}>MENU admin</Text>
+      <ScrollView style={styles.sidebarMenu} showsVerticalScrollIndicator={false}>
+        {menuItems.map((item: any) => (
+          <TouchableOpacity key={item.id} style={styles.menuItem} onPress={() => item.route !== '#' && router.push(item.route)}>
+            <Text style={styles.menuIcon}>{item.icon}</Text>
+            <Text style={styles.menuText}>{item.title}</Text>
+            <Text style={styles.menuArrow}></Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  containerWeb: { flex: 1, flexDirection: 'row', backgroundColor: '#E8E8E8' },
+  sidebar: { width: 220, backgroundColor: '#2C3E50', paddingVertical: 16, paddingHorizontal: 12 },
+  sidebarHeader: { paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#555' },
+  sidebarTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF', marginBottom: 4 },
+  sidebarStatus: { fontSize: 12, color: '#4CAF50' },
+  menuLabel: { fontSize: 11, color: '#999', marginTop: 12, marginBottom: 8 },
+  sidebarMenu: { flex: 1 },
+  menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 8, marginBottom: 4, borderRadius: 4 },
+  menuIcon: { fontSize: 16, marginRight: 12 },
+  menuText: { fontSize: 14, color: '#DDD', flex: 1 },
+  menuArrow: { fontSize: 14, color: '#999' },
   container: {
     flex: 1,
     backgroundColor: '#f4f6fb',

@@ -15,13 +15,16 @@
 // ============================================================
 // 👇 SỬA IP Ở ĐÂY KHI ĐỔI MẠNG WIFI 👇
 // ============================================================
-export const LOCAL_IP = '10.212.147.127';
+export const LOCAL_IP = '192.168.2.51';
 // ============================================================
 
 export const API_PORT = '8080';
 
 export const getApiUrl = () => {
-  return `http://${LOCAL_IP}:${API_PORT}/api`;
+  // Use localhost for web, IP for mobile
+  const isWeb = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+  const host = isWeb ? 'localhost' : LOCAL_IP;
+  return `http://${host}:${API_PORT}`;
 };
 
 // URL để test kết nối backend

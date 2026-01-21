@@ -1,80 +1,104 @@
 package com.example.__NguyenHoangVi.controller;
 
 import com.example.__NguyenHoangVi.entity.User;
-import com.example.__NguyenHoangVi.repository.UserRepository;
+import com.example.__NguyenHoangVi.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class UserController {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
+
+    // ============ ADMIN MANAGEMENT ENDPOINTS ============
+
+    // GET /api/users - Lấy danh sách tất cả users (cho admin)
+    @GetMapping
+    public ResponseEntity<?> getAllUsers() {
+        try {
+            List<User> users = userService.getAllUsers();
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error fetching users: " + e.getMessage());
+        }
+    }
+
+    // POST /api/users - Thêm user mới (cho admin)
+    @PostMapping
+    public ResponseEntity<?> createUser(@RequestBody User userRequest) {
+        try {
+            User newUser = userService.createUser(userRequest);
+            return ResponseEntity.ok(newUser);
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body("Error creating user: " + e.getMessage());
+        }
+    }
 
     // GET /api/users/{id} - Lấy thông tin user
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
-        Optional<User> user = userRepository.findById(id);
-        if (user.isPresent()) {
-            return ResponseEntity.ok(user.get());
+        try {
+            Optional<User> user = userService.getUserById(id);
+            if (user.isPresent()) {
+                return ResponseEntity.ok(user.get());
+            }
+            return ResponseEntity.status(404).body("User not found");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error: " + e.getMessage());
         }
-        return ResponseEntity.status(404).body("User not found");
     }
 
-    // PUT /api/users/{id} - Cập nhật thông tin user
+    // PUT /api/users/{id} - Cập nhật thông tin user (cho admin)
     @PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody User userRequest) {
-        Optional<User> existingUser = userRepository.findById(id);
-
-        if (!existingUser.isPresent()) {
-            return ResponseEntity.status(404).body("User not found");
+        try {
+            User updatedUser = userService.updateUser(id, userRequest);
+            return ResponseEntity.ok(updatedUser);
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body("Error updating user: " + e.getMessage());
         }
-
-        User user = existingUser.get();
-
-        // Cập nhật các trường được phép
-        if (userRequest.getFullName() != null) {
-            user.setFullName(userRequest.getFullName());
-        }
-        if (userRequest.getEmail() != null) {
-            user.setEmail(userRequest.getEmail());
-        }
-        if (userRequest.getPhone() != null) {
-            user.setPhone(userRequest.getPhone());
-        }
-        if (userRequest.getAddress() != null) {
-            user.setAddress(userRequest.getAddress());
-        }
-
-        User updatedUser = userRepository.save(user);
-        return ResponseEntity.ok(updatedUser);
     }
+
+    // DELETE /api/users/{id} - Xóa user (cho admin)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        try {
+            userService.deleteUser(id);
+            return ResponseEntity.ok("User deleted successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body("Error deleting user: " + e.getMessage());
+        }
+    }
+
+    // ============ USER MANAGEMENT ENDPOINTS ============
 
     // POST /api/users/{id}/change-password - Đổi mật khẩu
     @PostMapping("/{id}/change-password")
     public ResponseEntity<?> changePassword(@PathVariable Long id, @RequestBody PasswordChangeRequest request) {
-        Optional<User> existingUser = userRepository.findById(id);
-
-        if (!existingUser.isPresent()) {
-            return ResponseEntity.status(404).body("User not found");
+        try {
+            userService.changePassword(id, request.getOldPassword(), request.getNewPassword());
+            return ResponseEntity.ok("Password changed successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body("Error: " + e.getMessage());
         }
+    }
 
-        User user = existingUser.get();
-
-        // Kiểm tra mật khẩu cũ
-        if (!user.getPassword().equals(request.getOldPassword())) {
-            return ResponseEntity.status(400).body("Old password is incorrect");
+    // PATCH /api/users/{id}/toggle-status - Bật/tắt trạng thái user
+    @PatchMapping("/{id}/toggle-status")
+    public ResponseEntity<?> toggleUserStatus(@PathVariable Long id) {
+        try {
+            User updatedUser = userService.toggleUserStatus(id);
+            return ResponseEntity.ok(updatedUser);
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body("Error: " + e.getMessage());
         }
-
-        // Cập nhật mật khẩu mới
-        user.setPassword(request.getNewPassword());
-        userRepository.save(user);
-
-        return ResponseEntity.ok("Password changed successfully");
     }
 
     // Inner class cho request đổi mật khẩu
