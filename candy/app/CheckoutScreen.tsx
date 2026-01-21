@@ -13,11 +13,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 import { getApiUrl } from '../config/network';
 
 export default function CheckoutScreen() {
   const router = useRouter();
   const { cartItems, getCartTotal, clearCart } = useCart();
+  const { showToast } = useToast();
   
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -37,7 +39,7 @@ export default function CheckoutScreen() {
 
   const handlePlaceOrder = async () => {
     if (!name || !phone || !address) {
-      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin');
+      showToast('Vui lòng điền đầy đủ thông tin!', 'warning');
       return;
     }
 
@@ -46,6 +48,7 @@ export default function CheckoutScreen() {
       setShowQRModal(true);
     } else {
       // COD - Tạo đơn hàng ngay
+      showToast('📦 Đang xử lý đơn hàng...', 'info');
       await createOrder('COD', 'pending');
     }
   };
@@ -77,22 +80,16 @@ export default function CheckoutScreen() {
 
       if (res.ok) {
         clearCart();
-        Alert.alert('Thành công', 'Đặt hàng thành công!', [
-          {
-            text: 'Xem đơn hàng',
-            onPress: () => router.push('/Orders' as any),
-          },
-          {
-            text: 'Về trang chủ',
-            onPress: () => router.push('/Customer' as any),
-          },
-        ]);
+        showToast('✅ Đặt hàng thành công! Cảm ơn bạn!', 'success');
+        setTimeout(() => {
+          router.push('/Orders' as any);
+        }, 2000);
       } else {
         throw new Error('Không thể tạo đơn hàng');
       }
     } catch (error) {
       console.error('Error creating order:', error);
-      Alert.alert('Lỗi', 'Không thể tạo đơn hàng. Vui lòng thử lại!');
+      showToast('❌ Không thể tạo đơn hàng. Vui lòng thử lại!', 'error');
     }
   };
 

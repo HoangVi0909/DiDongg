@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Fla
 import { useRouter } from 'expo-router';
 import { getApiUrl } from '../config/network';
 import { useCart, Product } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = (width - 24) / 2;
@@ -16,6 +17,7 @@ interface Category {
 export default function CustomerScreen() {
   const router = useRouter();
   const { addToCart, getCartCount } = useCart();
+  const { showToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -128,6 +130,7 @@ export default function CustomerScreen() {
           onPress={(e) => {
             e.stopPropagation();
             addToCart(item, 1);
+            showToast(`✨ Đã thêm "${item.name}" vào giỏ hàng!`, 'success');
           }}
         >
           <Text style={styles.addToCartText}>+ Giỏ hàng</Text>

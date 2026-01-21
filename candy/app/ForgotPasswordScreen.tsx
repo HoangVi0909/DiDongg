@@ -17,6 +17,14 @@ export default function ForgotPasswordScreen() {
       Alert.alert('Lỗi', 'Vui lòng nhập email');
       return;
     }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      Alert.alert('Lỗi', 'Email không đúng định dạng. Ví dụ: example@email.com');
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch(`${getApiUrl()}/auth/forgot-password`, {
@@ -29,7 +37,7 @@ export default function ForgotPasswordScreen() {
         Alert.alert('✅ Thành công', data.message || 'Mã xác nhận đã được gửi đến email của bạn');
         setStep(2);
       } else {
-        Alert.alert('Lỗi', data.error || 'Email không tồn tại');
+        Alert.alert('❌ Lỗi', data.error || 'Email không tồn tại');
       }
     } catch (error) {
       Alert.alert('Lỗi', 'Không thể kết nối server');
@@ -82,10 +90,6 @@ export default function ForgotPasswordScreen() {
       Alert.alert('Lỗi', 'Mật khẩu không khớp');
       return;
     }
-    if (newPassword.length < 6) {
-      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
-      return;
-    }
     setLoading(true);
     try {
       const res = await fetch(`${getApiUrl()}/auth/reset-password`, {
@@ -98,7 +102,7 @@ export default function ForgotPasswordScreen() {
         router.push('/Login');
       } else {
         const data = await res.json();
-        Alert.alert('Lỗi', data.error || 'Đổi mật khẩu thất bại');
+        Alert.alert('❌ Lỗi', data.error || 'Đổi mật khẩu thất bại');
       }
     } catch (error) {
       Alert.alert('Lỗi', 'Không thể kết nối server');

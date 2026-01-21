@@ -7,10 +7,10 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useCart, Product } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 import { getApiUrl } from '../config/network';
 
 export default function ProductDetailScreen() {
@@ -19,12 +19,14 @@ export default function ProductDetailScreen() {
   const productId = params.id as string;
   
   const { addToCart, addToFavorites, removeFromFavorites, isFavorite } = useCart();
+  const { showToast } = useToast();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     fetchProductDetail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
   const fetchProductDetail = async () => {
@@ -51,14 +53,17 @@ export default function ProductDetailScreen() {
   const handleAddToCart = () => {
     if (product) {
       addToCart(product, quantity);
-      Alert.alert('Thành công', 'Đã thêm vào giỏ hàng!');
+      showToast(`✨ Đã thêm ${quantity} sản phẩm vào giỏ hàng!`, 'success');
     }
   };
 
   const handleBuyNow = () => {
     if (product) {
       addToCart(product, quantity);
-      router.push('/Cart');
+      showToast(`✨ Đã thêm vào giỏ hàng! Đang chuyển hướng...`, 'success');
+      setTimeout(() => {
+        router.push('/Cart');
+      }, 500);
     }
   };
 
@@ -66,10 +71,10 @@ export default function ProductDetailScreen() {
     if (product) {
       if (isFavorite(product.id)) {
         removeFromFavorites(product.id);
-        Alert.alert('Đã xóa', 'Đã xóa khỏi danh sách yêu thích');
+        showToast('❌ Đã xóa khỏi yêu thích', 'info');
       } else {
         addToFavorites(product);
-        Alert.alert('Đã thêm', 'Đã thêm vào danh sách yêu thích');
+        showToast('❤️ Đã thêm vào yêu thích!', 'success');
       }
     }
   };

@@ -10,17 +10,22 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 
 export default function CartScreen() {
   const router = useRouter();
   const { cartItems, updateQuantity, removeFromCart, getCartTotal, clearCart } = useCart();
+  const { showToast } = useToast();
 
   const handleCheckout = () => {
     if (cartItems.length === 0) {
-      Alert.alert('Giỏ hàng trống', 'Vui lòng thêm sản phẩm vào giỏ hàng');
+      showToast('Giỏ hàng trống! Thêm sản phẩm trước khi thanh toán', 'warning');
       return;
     }
-    router.push('/Checkout' as any);
+    showToast('📦 Đang chuyển hướng đến thanh toán...', 'info');
+    setTimeout(() => {
+      router.push('/Checkout' as any);
+    }, 500);
   };
 
   const handleRemoveItem = (productId: number, productName: string) => {
@@ -32,7 +37,10 @@ export default function CartScreen() {
         {
           text: 'Xóa',
           style: 'destructive',
-          onPress: () => removeFromCart(productId),
+          onPress: () => {
+            removeFromCart(productId);
+            showToast(`🗑️ Đã xóa "${productName}"`, 'info');
+          },
         },
       ]
     );
@@ -47,7 +55,10 @@ export default function CartScreen() {
         {
           text: 'Xóa tất cả',
           style: 'destructive',
-          onPress: () => clearCart(),
+          onPress: () => {
+            clearCart();
+            showToast('🗑️ Đã xóa tất cả sản phẩm', 'info');
+          },
         },
       ]
     );

@@ -9,10 +9,12 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 
 export default function FavoritesScreen() {
   const router = useRouter();
   const { favorites, removeFromFavorites, addToCart } = useCart();
+  const { showToast } = useToast();
 
   const renderFavorite = ({ item }: { item: any }) => (
     <View style={styles.favoriteCard}>
@@ -34,13 +36,19 @@ export default function FavoritesScreen() {
       <View style={styles.actions}>
         <TouchableOpacity
           style={styles.addToCartButton}
-          onPress={() => addToCart(item, 1)}
+          onPress={() => {
+            addToCart(item, 1);
+            showToast(`✨ Đã thêm "${item.name}" vào giỏ hàng!`, 'success');
+          }}
         >
           <Text style={styles.addToCartText}>Thêm vào giỏ</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.removeButton}
-          onPress={() => removeFromFavorites(item.id)}
+          onPress={() => {
+            removeFromFavorites(item.id);
+            showToast(`❌ Đã xóa "${item.name}"`, 'info');
+          }}
         >
           <Text style={styles.removeText}>Xóa</Text>
         </TouchableOpacity>

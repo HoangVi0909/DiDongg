@@ -16,7 +16,7 @@ export default function LoginScreen() {
   }, []);
 
   const handleLogin = async () => {
-    if (!username || !password) {
+    if (!username?.trim() || !password) {
       Alert.alert('Lỗi', 'Vui lòng nhập tên đăng nhập và mật khẩu');
       return;
     }
@@ -27,7 +27,7 @@ export default function LoginScreen() {
       const res = await fetch(`${getApiUrl()}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username: username.trim(), password })
       });
       
       const text = await res.text();
@@ -47,20 +47,20 @@ export default function LoginScreen() {
           if (user && user.role) {
             const role = user.role.toUpperCase();
             if (role === 'ADMIN') {
-              Alert.alert('Đăng nhập thành công!', `Xin chào Admin ${user.fullName || user.username}`);
+              Alert.alert('✅ Đăng nhập thành công!', `Xin chào Admin ${user.fullName || user.username}`);
               router.push('/Admin');
             } else if (role === 'STAFF') {
-              Alert.alert('Đăng nhập thành công!', `Xin chào ${user.fullName || user.username}`);
+              Alert.alert('✅ Đăng nhập thành công!', `Xin chào ${user.fullName || user.username}`);
               router.push('/Staff');
             } else if (role === 'CUSTOMER') {
-              Alert.alert('Đăng nhập thành công!', `Xin chào ${user.fullName || user.username}`);
+              Alert.alert('✅ Đăng nhập thành công!', `Xin chào ${user.fullName || user.username}`);
               router.push('/Customer');
             } else {
-              Alert.alert('Đăng nhập thành công!', `Xin chào ${user.fullName || user.username}`);
+              Alert.alert('✅ Đăng nhập thành công!', `Xin chào ${user.fullName || user.username}`);
               router.push('/Home');
             }
           } else {
-            Alert.alert('Đăng nhập thành công!', `Xin chào ${user.fullName || user.username}`);
+            Alert.alert('✅ Đăng nhập thành công!', `Xin chào ${user.fullName || user.username}`);
             router.push('/Home');
           }
         } catch (parseError) {
@@ -69,7 +69,12 @@ export default function LoginScreen() {
         }
       } else {
         console.error(`❌ Login failed: ${res.status}`);
-        Alert.alert('Đăng nhập thất bại', text || `Lỗi ${res.status}`);
+        try {
+          const errorData = JSON.parse(text);
+          Alert.alert('❌ Đăng nhập thất bại', errorData.error || 'Tên đăng nhập hoặc mật khẩu không đúng');
+        } catch {
+          Alert.alert('❌ Đăng nhập thất bại', text || `Lỗi ${res.status}`);
+        }
       }
     } catch (error) {
       console.error('❌ Network error:', error);

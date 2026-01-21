@@ -16,34 +16,14 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    // Validate input
+    // Client-side validation
     if (!fullName.trim() || !email.trim() || !username.trim() || !password.trim()) {
       Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin');
       return;
     }
 
-    // Validate full name - không được chứa số
-    if (/\d/.test(fullName)) {
-      Alert.alert('Lỗi', 'Họ và tên không được chứa số');
-      return;
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      Alert.alert('Lỗi', 'Email không đúng định dạng. Ví dụ: example@email.com');
-      return;
-    }
-
-    // Validate password length
-    if (password.length < 6) {
-      Alert.alert('Lỗi', 'Mật khẩu phải có ít nhất 6 ký tự');
-      return;
-    }
-
     setLoading(true);
     try {
-      // Register user (backend will handle duplicate username check)
       const res = await fetch(`${getApiUrl()}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -57,17 +37,14 @@ export default function RegisterScreen() {
         })
       });
       
+      const data = await res.json();
+      
       if (res.ok) {
-        Alert.alert('Đăng ký thành công!', 'Bạn có thể đăng nhập ngay.');
+        Alert.alert('✅ Đăng ký thành công!', 'Bạn có thể đăng nhập ngay.');
         router.push('/Login');
       } else {
-        const data = await res.json();
-        // Check if error is about duplicate username
-        if (data.error && data.error.includes('tồn tại')) {
-          Alert.alert('Lỗi', 'Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác');
-        } else {
-          Alert.alert('Đăng ký thất bại', data.error || 'Vui lòng thử lại');
-        }
+        // Server validation errors
+        Alert.alert('❌ Đăng ký thất bại', data.error || 'Vui lòng thử lại');
       }
     } catch (error) {
       console.error('Register error:', error);

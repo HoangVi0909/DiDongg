@@ -37,13 +37,18 @@ public class AuthController {
     // POST http://localhost:8080/api/auth/register
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User req) {
-        User user = authService.register(req);
-        if (user == null) {
+        try {
+            User user = authService.register(req);
+            return ResponseEntity.ok(user);
+        } catch (IllegalArgumentException e) {
             Map<String, String> error = new HashMap<>();
-            error.put("error", "Tên đăng nhập đã tồn tại");
+            error.put("error", e.getMessage());
             return ResponseEntity.status(400).body(error);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Lỗi đăng ký: " + e.getMessage());
+            return ResponseEntity.status(500).body(error);
         }
-        return ResponseEntity.ok(user);
     }
 
     // POST http://localhost:8080/api/auth/forgot-password
