@@ -14,12 +14,14 @@ import {
 import { useRouter } from 'expo-router';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
+import { useUser } from '../context/UserContext';
 import { getApiUrl } from '../config/network';
 
 export default function CheckoutScreen() {
   const router = useRouter();
   const { cartItems, getCartTotal, clearCart } = useCart();
   const { showToast } = useToast();
+  const { setUserPhone } = useUser();
   
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -27,6 +29,7 @@ export default function CheckoutScreen() {
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [showQRModal, setShowQRModal] = useState(false);
   const [orderId, setOrderId] = useState<number | null>(null);
+  const [phoneError, setPhoneError] = useState('');
 
   // Thông tin ngân hàng của bạn
   const BANK_INFO = {
@@ -45,9 +48,61 @@ export default function CheckoutScreen() {
   const shippingFee = cartTotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
   const finalTotal = cartTotal + shippingFee;
 
+  // Hàm validate số điện thoại
+  const validatePhone = (phoneNumber: string): { valid: boolean; message?: string } => {
+    // Loại bỏ khoảng trắng
+    const cleanPhone = phoneNumber.trim();
+    
+    // Kiểm tra có chứa chữ không
+    if (/[a-zA-Z]/.test(cleanPhone)) {
+      return { valid: false, message: 'Số điện thoại không được chứa chữ!' };
+    }
+    
+    // Kiểm tra chỉ có số và dấu ngoặc, dấu gạch ngang, dấu cộng
+    if (!/^[\d\-\+\(\)\s]*$/.test(cleanPhone)) {
+      return { valid: false, message: 'Số điện thoại chỉ được chứa số và ký tự đặc biệt cho định dạng!' };
+    }
+    
+    // Lấy ra chỉ các ký tự số
+    const digitsOnly = cleanPhone.replace(/\D/g, '');
+    
+    // Kiểm tra đủ 10 số
+    if (digitsOnly.length !== 10) {
+      return { valid: false, message: `Số điện thoại phải đủ 10 số (hiện có ${digitsOnly.length} số)!` };
+    }
+    
+    return { valid: true };
+  };
+
+  // Handler cho input số điện thoại - validate real-time
+  const handlePhoneChange = (text: string) => {
+    setPhone(text);
+    
+    // Nếu rỗng, không hiển thị lỗi
+    if (!text.trim()) {
+      setPhoneError('');
+      return;
+    }
+    
+    // Validate khi người dùng đang nhập
+    const validation = validatePhone(text);
+    if (!validation.valid) {
+      setPhoneError(validation.message || '');
+    } else {
+      setPhoneError('');
+    }
+  };
+
   const handlePlaceOrder = async () => {
     if (!name || !phone || !address) {
       showToast('Vui lòng điền đầy đủ thông tin!', 'warning');
+      return;
+    }
+
+    // Validate số điện thoại
+    const phoneValidation = validatePhone(phone);
+    if (!phoneValidation.valid) {
+      showToast(phoneValidation.message || 'Số điện thoại không hợp lệ!', 'error');
       return;
     }
 
@@ -83,7 +138,7 @@ export default function CheckoutScreen() {
       console.log('🌐 API URL:', `${getApiUrl()}/orders`);
 
       // Gọi API tạo đơn hàng
-      const res = await fetch(`${getApiUrl()}/api/orders`, {
+      const res = await fetch(`${getApiUrl()}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData),
@@ -95,14 +150,20 @@ export default function CheckoutScreen() {
 
       if (res.ok) {
         setOrderId(responseData.orderId);
+        
+        // Lưu số điện thoại (chỉ lấy chữ số) để dùng fetch orders sau này
+        const cleanedPhone = phone.replace(/\D/g, '');
+        setUserPhone(cleanedPhone);
+        console.log('✅ Saved user phone (cleaned):', cleanedPhone);
+        
         clearCart();
         
         if (method === 'BANK') {
-          showToast('📦 Vui lòng hoàn tất thanh toán!', 'info');
+          showToast('📦 Vui lòng đợi admin xác nhận thanh toán!', 'info');
         } else {
           showToast('✅ Đặt hàng thành công! Cảm ơn bạn!', 'success');
           setTimeout(() => {
-            router.push('/Orders' as any);
+            router.push('/Customer' as any);
           }, 2000);
         }
       } else {
@@ -122,9 +183,9 @@ export default function CheckoutScreen() {
     // Tạo đơn hàng với trạng thái pending
     await createOrder('BANK', 'pending', 'online_payment');
     
-    // Chuyển hướng sau 2 giây
+    // Chuyển hướng về Customer sau 2 giây
     setTimeout(() => {
-      router.push('/Orders' as any);
+      router.push('/Customer' as any);
     }, 2000);
   };
 
@@ -140,12 +201,16 @@ export default function CheckoutScreen() {
             onChangeText={setName}
           />
           <TextInput
-            style={styles.input}
+            style={[styles.input, phoneError && styles.inputError]}
             placeholder="Số điện thoại"
             keyboardType="phone-pad"
             value={phone}
-            onChangeText={setPhone}
+            onChangeText={handlePhoneChange}
+            maxLength={20}
           />
+          {phoneError ? (
+            <Text style={styles.errorText}>{phoneError}</Text>
+          ) : null}
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder="Địa chỉ nhận hàng"
@@ -313,6 +378,18 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     fontSize: 14,
+  },
+  inputError: {
+    borderWidth: 1,
+    borderColor: '#ff4444',
+    backgroundColor: '#fff5f5',
+  },
+  errorText: {
+    color: '#ff4444',
+    fontSize: 12,
+    marginTop: -10,
+    marginBottom: 12,
+    paddingHorizontal: 4,
   },
   textArea: {
     height: 80,

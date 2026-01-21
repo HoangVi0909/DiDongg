@@ -8,6 +8,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { logNetworkConfig } from '../config/network';
 import { CartProvider } from '../context/CartContext';
 import { ToastProvider } from '../context/ToastContext';
+import { UserProvider } from '../context/UserContext';
 
 // Comment out để app không tự động redirect về tabs
 // export const unstable_settings = {
@@ -24,9 +25,10 @@ export default function RootLayout() {
 
   return (
     <CartProvider>
-      <ToastProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack initialRouteName="Login">
+      <UserProvider>
+        <ToastProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack initialRouteName="Login">
       <Stack.Screen name="Login" options={{ title: 'Đăng nhập', headerShown: false }} />
       <Stack.Screen name="Register" options={{ title: 'Đăng ký', headerShown: false }} />
       <Stack.Screen name="AdminLogin" options={{ title: 'Đăng nhập Admin', headerShown: false }} />
@@ -46,7 +48,8 @@ export default function RootLayout() {
           </Stack>
           <StatusBar style="auto" />
         </ThemeProvider>
-      </ToastProvider>
+        </ToastProvider>
+      </UserProvider>
     </CartProvider>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { useUser } from '../context/UserContext';
 import { getApiUrl } from '../config/network';
 
 interface Order {
@@ -28,6 +29,83 @@ export default function OrdersScreen() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { userPhone } = useUser();
+
+  const fetchOrders = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Clean phone: chỉ giữ lại các chữ số (fix lỗi nếu phone bị lưu sai format)
+      const cleanPhone = userPhone 
+        ? userPhone.replace(/\D/g, '').substring(0, 20) 
+        : null;
+      
+      let ordersArray: Order[] = [];
+      
+      // Thử fetch by phone trước nếu có phone
+      if (cleanPhone && cleanPhone.length > 0) {
+        const url = `${getApiUrl()}/orders/by-phone?phone=${encodeURIComponent(cleanPhone)}`;
+        console.log('📱 Fetching orders with phone:', url);
+        
+        const res = await fetch(url);
+        console.log('📱 Response status (by-phone):', res.status);
+        
+        if (res.ok) {
+          const data = await res.json();
+          console.log('📱 Response data (by-phone):', data);
+          ordersArray = data.orders || (Array.isArray(data) ? data : []);
+          console.log('📱 Found', ordersArray.length, 'orders by phone');
+        }
+      }
+      
+      // Nếu không tìm thấy order by phone, fallback lấy tất cả (cho compatible với order cũ)
+      if (ordersArray.length === 0) {
+        console.log('⚠️ No orders found by phone, falling back to fetch all orders...');
+        const url = `${getApiUrl()}/orders`;
+        console.log('📱 Fetching all orders:', url);
+        
+        const res = await fetch(url);
+        console.log('📱 Response status (all):', res.status);
+        
+        if (res.ok) {
+          const data = await res.json();
+          console.log('📱 Response data (all):', data);
+          ordersArray = Array.isArray(data) ? data : [];
+          console.log('📱 Found', ordersArray.length, 'orders (all)');
+        }
+      }
+      
+      const sortedOrders = ordersArray.sort((a: Order, b: Order) => b.id - a.id);
+      
+      // Kiểm tra xem có đơn hàng nào được xác nhận không
+      setOrders((prevOrders) => {
+        const hasStatusUpdates = sortedOrders.some((newOrder: Order) => {
+          const oldOrder = prevOrders.find((o) => o.id === newOrder.id);
+          return oldOrder && oldOrder.status !== newOrder.status;
+        });
+
+        // Nếu có cập nhật trạng thái, hiển thị notification
+        if (hasStatusUpdates) {
+          sortedOrders.forEach((newOrder: Order) => {
+            const oldOrder = prevOrders.find((o) => o.id === newOrder.id);
+            if (oldOrder && oldOrder.status !== newOrder.status && newOrder.status === 'confirmed') {
+              Alert.alert(
+                '✅ Đơn hàng đã được xác nhận!',
+                `Đơn hàng #${newOrder.id} của bạn đã được shop xác nhận. Chuẩn bị giao hàng...`
+              );
+            }
+          });
+        }
+
+        return sortedOrders;
+      });
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [userPhone]);
 
   // Fetch orders khi màn hình được focus
   useFocusEffect(
@@ -42,48 +120,8 @@ export default function OrdersScreen() {
       return () => {
         clearInterval(pollingInterval);
       };
-    }, [])
+    }, [fetchOrders])
   );
-
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${getApiUrl()}/api/orders`);
-      if (res.ok) {
-        const data = await res.json();
-        const ordersArray = Array.isArray(data) ? data : data.orders || [];
-        const sortedOrders = ordersArray.sort((a: Order, b: Order) => b.id - a.id);
-        
-        // Kiểm tra xem có đơn hàng nào được xác nhận không
-        setOrders((prevOrders) => {
-          const hasStatusUpdates = sortedOrders.some((newOrder: Order) => {
-            const oldOrder = prevOrders.find((o) => o.id === newOrder.id);
-            return oldOrder && oldOrder.status !== newOrder.status;
-          });
-
-          // Nếu có cập nhật trạng thái, hiển thị notification
-          if (hasStatusUpdates) {
-            sortedOrders.forEach((newOrder: Order) => {
-              const oldOrder = prevOrders.find((o) => o.id === newOrder.id);
-              if (oldOrder && oldOrder.status !== newOrder.status && newOrder.status === 'confirmed') {
-                Alert.alert(
-                  '✅ Đơn hàng đã được xác nhận!',
-                  `Đơn hàng #${newOrder.id} của bạn đã được shop xác nhận. Chuẩn bị giao hàng...`
-                );
-              }
-            });
-          }
-
-          return sortedOrders;
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
 
   const handleRefresh = () => {
     setRefreshing(true);

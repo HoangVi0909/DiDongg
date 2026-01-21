@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getApiUrl } from '../config/network';
+import { useToast } from '../context/ToastContext';
 
 interface Order {
   id: number;
@@ -28,13 +29,15 @@ interface Order {
 
 export default function AdminOrders() {
   const router = useRouter();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const { showToast } = useToast();
+  const [allOrders, setAllOrders] = useState<Order[]>([]); // Lưu TẤT CẢ orders
+  const [orders, setOrders] = useState<Order[]>([]); // Lưu orders được filter theo tab
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pending' | 'all'>('pending');
+  const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'all'>('pending');
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
@@ -48,19 +51,27 @@ export default function AdminOrders() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      let url: string;
       
-      if (activeTab === 'pending') {
-        url = `${getApiUrl()}/api/orders/pending-payment`;
-      } else {
-        url = `${getApiUrl()}/api/orders`;
-      }
-
-      const res = await fetch(url);
+      // Luôn fetch tất cả orders
+      const res = await fetch(`${getApiUrl()}/orders`);
       if (res.ok) {
         const responseData = await res.json();
-        const ordersArray = responseData.orders || responseData;
-        setOrders(Array.isArray(ordersArray) ? ordersArray : []);
+        let ordersArray = responseData.orders || responseData;
+        ordersArray = Array.isArray(ordersArray) ? ordersArray : [];
+        
+        // Lưu tất cả orders vào allOrders
+        setAllOrders(ordersArray);
+        
+        // Filter theo tab và set vào orders
+        let filteredOrders = ordersArray;
+        if (activeTab === 'pending') {
+          filteredOrders = ordersArray.filter((o: Order) => o.status === 'pending');
+        } else if (activeTab === 'confirmed') {
+          filteredOrders = ordersArray.filter((o: Order) => o.status === 'confirmed');
+        }
+        // Nếu activeTab === 'all' thì giữ nguyên tất cả
+        
+        setOrders(filteredOrders);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -79,31 +90,69 @@ export default function AdminOrders() {
   const handleConfirmPayment = async (orderId: number) => {
     try {
       setConfirming(true);
-      const res = await fetch(`${getApiUrl()}/api/orders/${orderId}/confirm-payment`, {
+      console.log('🔄 Confirming payment for order:', orderId);
+      
+      const res = await fetch(`${getApiUrl()}/orders/${orderId}/confirm-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
+      console.log('📊 Response status:', res.status);
+      
       if (res.ok) {
-        await res.json();
-        Alert.alert('Thành công', 'Đơn hàng đã được xác nhận!', [
-          {
-            text: 'OK',
-            onPress: () => {
-              setModalVisible(false);
-              setSelectedOrder(null);
-              fetchOrders();
-            },
-          },
-        ]);
+        const responseData = await res.json();
+        console.log('✅ Response data:', responseData);
+        
+        // Cập nhật allOrders: tìm order cũ và update status
+        setAllOrders(prevOrders => {
+          const updated = prevOrders.map(order => 
+            order.id === orderId 
+              ? { ...order, status: 'confirmed' }
+              : order
+          );
+          console.log('✓ Updated allOrders');
+          return updated;
+        });
+        
+        // Cập nhật orders list theo tab (remove nếu pending)
+        if (activeTab === 'pending') {
+          setOrders(prevOrders => {
+            const filtered = prevOrders.filter(o => o.id !== orderId);
+            console.log('✓ Filtered pending orders, count:', filtered.length);
+            return filtered;
+          });
+        } else if (activeTab === 'confirmed') {
+          // Nếu đang ở tab confirmed, thêm order vào
+          if (responseData.order) {
+            setOrders(prevOrders => [responseData.order, ...prevOrders]);
+          }
+        } else if (activeTab === 'all') {
+          // Nếu ở tab all, update order đó
+          setOrders(prevOrders => 
+            prevOrders.map(order =>
+              order.id === orderId 
+                ? { ...order, status: 'confirmed' }
+                : order
+            )
+          );
+        }
+        
+        // Update selected order để modal show nút giao hàng
+        if (responseData.order) {
+          setSelectedOrder(responseData.order);
+        }
+        
+        // Hiển thị toast SETELAH state update
+        showToast('✅ Đơn hàng đã được xác nhận!', 'success');
       } else {
-        Alert.alert('Lỗi', 'Không thể xác nhận đơn hàng');
+        console.log('❌ Response not ok');
+        showToast('❌ Không thể xác nhận đơn hàng', 'error');
       }
     } catch (error) {
-      console.error('Error confirming payment:', error);
-      Alert.alert('Lỗi', 'Đã xảy ra lỗi khi xác nhận thanh toán');
+      console.error('❌ Error confirming payment:', error);
+      showToast('❌ Đã xảy ra lỗi khi xác nhận thanh toán', 'error');
     } finally {
       setConfirming(false);
     }
@@ -112,7 +161,7 @@ export default function AdminOrders() {
   const handleUpdateStatus = async (orderId: number, newStatus: string) => {
     try {
       setUpdatingStatus(true);
-      const res = await fetch(`${getApiUrl()}/api/orders/${orderId}/status`, {
+      const res = await fetch(`${getApiUrl()}/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -197,7 +246,15 @@ export default function AdminOrders() {
           onPress={() => setActiveTab('pending')}
         >
           <Text style={[styles.tabText, activeTab === 'pending' && styles.activeTabText]}>
-            Chờ xác nhận ({orders.filter(o => o.status === 'pending').length})
+            Chờ xác nhận ({allOrders.filter(o => o.status === 'pending').length})
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'confirmed' && styles.activeTab]}
+          onPress={() => setActiveTab('confirmed')}
+        >
+          <Text style={[styles.tabText, activeTab === 'confirmed' && styles.activeTabText]}>
+            Đã xác nhận ({allOrders.filter(o => o.status === 'confirmed').length})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -205,7 +262,7 @@ export default function AdminOrders() {
           onPress={() => setActiveTab('all')}
         >
           <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>
-            Tất cả ({orders.length})
+            Tất cả ({allOrders.length})
           </Text>
         </TouchableOpacity>
       </View>
@@ -229,14 +286,14 @@ export default function AdminOrders() {
         ) : (
           <View style={styles.ordersList}>
             {orders.map((order) => (
-              <TouchableOpacity
-                key={order.id}
-                style={styles.orderCard}
-                onPress={() => {
-                  setSelectedOrder(order);
-                  setModalVisible(true);
-                }}
-              >
+              <View key={order.id} style={styles.orderCard}>
+                <TouchableOpacity
+                  style={{ flex: 1 }}
+                  onPress={() => {
+                    setSelectedOrder(order);
+                    setModalVisible(true);
+                  }}
+                >
                 <View style={styles.orderHeader}>
                   <View>
                     <Text style={styles.orderId}>Đơn hàng #{order.id}</Text>
@@ -289,13 +346,17 @@ export default function AdminOrders() {
                     <Text style={styles.totalAmount}>{formatCurrency(order.totalAmount)}</Text>
                   </View>
                 </View>
+                </TouchableOpacity>
 
-                {order.status === 'pending' && order.paymentMethod === 'BANK' && (
-                  <View style={styles.actionButton}>
-                    <Text style={styles.actionButtonText}>Nhấn để xác nhận →</Text>
-                  </View>
+                {order.status === 'pending' && (order.paymentMethod === 'BANK' || order.paymentMethod === 'COD') && (
+                  <Pressable
+                    style={styles.confirmButtonDirect}
+                    onPress={() => handleConfirmPayment(order.id)}
+                  >
+                    <Text style={styles.confirmButtonDirectText}>✓ Xác nhận đơn hàng</Text>
+                  </Pressable>
                 )}
-              </TouchableOpacity>
+              </View>
             ))}
           </View>
         )}
@@ -392,26 +453,25 @@ export default function AdminOrders() {
                   </View>
                 )}
 
-                {selectedOrder.status === 'confirmed' && (
-                  <View style={styles.statusUpdateContainer}>
-                    <Text style={styles.sectionTitle}>Cập nhật trạng thái giao hàng</Text>
-                    <View style={styles.statusButtonsRow}>
-                      <Pressable
-                        style={[styles.statusButton, styles.shippedButton]}
-                        onPress={() => handleUpdateStatus(selectedOrder.id, 'shipped')}
-                      >
-                        <Text style={styles.statusButtonText}>🚚 Đang giao</Text>
-                      </Pressable>
-                      <Pressable
-                        style={[styles.statusButton, styles.deliveredButton]}
-                        onPress={() => handleUpdateStatus(selectedOrder.id, 'delivered')}
-                      >
-                        <Text style={styles.statusButtonText}>✓ Đã giao</Text>
-                      </Pressable>
-                    </View>
+                {selectedOrder.status === 'pending' && selectedOrder.paymentMethod === 'COD' && (
+                  <View style={styles.modalFooter}>
+                    <Pressable
+                      style={styles.cancelButton}
+                      onPress={() => setModalVisible(false)}
+                    >
+                      <Text style={styles.cancelButtonText}>Hủy</Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.confirmButton, confirming && styles.confirmButtonDisabled]}
+                      onPress={() => handleConfirmPayment(selectedOrder.id)}
+                      disabled={confirming}
+                    >
+                      <Text style={styles.confirmButtonText}>
+                        {confirming ? 'Đang xác nhận...' : 'Xác nhận đơn hàng'}
+                      </Text>
+                    </Pressable>
                   </View>
                 )}
-
                 {selectedOrder.status === 'shipped' && (
                   <View style={styles.statusUpdateContainer}>
                     <Text style={styles.sectionTitle}>Hoàn thành giao hàng</Text>
@@ -609,6 +669,24 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 13,
+  },
+  confirmButtonDirect: {
+    backgroundColor: '#10b981',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  confirmButtonDirectText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
   },
   modalContainer: {
     flex: 1,

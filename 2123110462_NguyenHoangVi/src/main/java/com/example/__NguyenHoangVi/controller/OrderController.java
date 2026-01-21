@@ -36,7 +36,7 @@ public class OrderController {
             System.out.println("   - Payment: " + request.getPaymentMethod());
             System.out.println("   - Status: " + request.getStatus());
             System.out.println("   - Total: " + request.getTotalAmount());
-            
+
             // Tạo đơn hàng mới
             Order order = new Order();
             order.setCustomerName(request.getCustomerName());
@@ -62,7 +62,7 @@ public class OrderController {
         } catch (Exception e) {
             System.out.println("❌ Error creating order: " + e.getMessage());
             e.printStackTrace();
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("error", e.getMessage());
@@ -92,6 +92,33 @@ public class OrderController {
             response.put("order", updatedOrder);
 
             System.out.println("✅ Admin confirmed payment for order: " + id);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Lỗi: " + e.getMessage());
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+
+    // GET http://localhost:8080/api/orders/by-phone?phone=0909123456
+    // Lấy đơn hàng của một khách hàng cụ thể (theo số điện thoại)
+    @GetMapping("/by-phone")
+    public ResponseEntity<?> getOrdersByPhone(@RequestParam String phone) {
+        try {
+            if (phone == null || phone.isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Vui lòng cung cấp số điện thoại");
+                return ResponseEntity.status(400).body(error);
+            }
+
+            List<Order> orders = repo.findByPhone(phone);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("orders", orders);
+            response.put("count", orders.size());
+
+            System.out.println("📱 Fetched orders for phone: " + phone + " - Count: " + orders.size());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
