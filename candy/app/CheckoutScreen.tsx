@@ -37,6 +37,14 @@ export default function CheckoutScreen() {
     qrImage: require('../assets/qr/bank-qr.jpg'),
   };
 
+  // Tính tiền ship: nếu đơn >= 150k thì free ship
+  const SHIPPING_THRESHOLD = 150000;
+  const SHIPPING_FEE = 30000;
+  
+  const cartTotal = getCartTotal();
+  const shippingFee = cartTotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+  const finalTotal = cartTotal + shippingFee;
+
   const handlePlaceOrder = async () => {
     if (!name || !phone || !address) {
       showToast('Vui lòng điền đầy đủ thông tin!', 'warning');
@@ -61,7 +69,7 @@ export default function CheckoutScreen() {
         address: address,
         paymentMethod: method,
         status: status,
-        totalAmount: getCartTotal() + 30000,
+        totalAmount: finalTotal,
         transactionCode: txCode || '', // Mã giao dịch từ ngân hàng
         items: cartItems.map(item => ({
           productId: item.id,
@@ -190,12 +198,19 @@ export default function CheckoutScreen() {
         </View>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Phí vận chuyển:</Text>
-          <Text style={styles.totalValue}>₫30.000</Text>
+          <Text style={styles.totalValue}>
+            {shippingFee === 0 ? '🎉 Miễn phí' : `₫${shippingFee.toLocaleString()}`}
+          </Text>
         </View>
+        {shippingFee === 0 && (
+          <View style={styles.freeShipNote}>
+            <Text style={styles.freeShipText}>✨ Đơn hàng từ 150.000đ được miễn phí vận chuyển</Text>
+          </View>
+        )}
         <View style={[styles.totalRow, styles.grandTotal]}>
           <Text style={styles.grandTotalLabel}>Tổng cộng:</Text>
           <Text style={styles.grandTotalValue}>
-            ₫{(getCartTotal() + 30000).toLocaleString()}
+            ₫{finalTotal.toLocaleString()}
           </Text>
         </View>
       </View>
@@ -388,6 +403,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#ee4d2d',
+  },
+  freeShipNote: {
+    backgroundColor: '#f0f8ff',
+    borderRadius: 8,
+    padding: 10,
+    marginVertical: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4caf50',
+  },
+  freeShipText: {
+    fontSize: 13,
+    color: '#4caf50',
+    fontWeight: '500',
   },
   orderButton: {
     backgroundColor: '#ee4d2d',
