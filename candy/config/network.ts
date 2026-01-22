@@ -6,16 +6,17 @@
  * 🔴 QUAN TRỌNG: Khi đổi mạng WiFi, chỉ cần sửa IP ở đây!
  * 
  * Cách lấy IP máy tính:
- * - Windows: Mở CMD → gõ "ipconfig" → tìm IPv4 Address
+ * - Windows: Mở CMD → gõ "ipconfig" → tìm IPv4 Address (Wi-Fi adapter)
  * - Mac: System Preferences → Network → WiFi → IP Address
  * 
+ * ⚠️  CHỌN IP TỪ "Wireless LAN adapter Wi-Fi" (không phải VMware!)
  * Ví dụ: 192.168.1.105, 192.168.0.100, 10.0.0.5, v.v.
  */
 
 // ============================================================
 // 👇 SỬA IP Ở ĐÂY KHI ĐỔI MẠNG WIFI 👇
 // ============================================================
-export const LOCAL_IP = '192.168.2.51';
+export const LOCAL_IP = '10.212.147.127';
 // ============================================================
 
 export const API_PORT = '8080';

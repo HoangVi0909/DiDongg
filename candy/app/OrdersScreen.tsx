@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useUser } from '../context/UserContext';
 import { getApiUrl } from '../config/network';
 
@@ -26,6 +26,7 @@ interface Order {
 }
 
 export default function OrdersScreen() {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -166,53 +167,61 @@ export default function OrdersScreen() {
   };
 
   const renderOrder = ({ item }: { item: Order }) => (
-    <TouchableOpacity
-      style={styles.orderCard}
-      onPress={() => {
-        Alert.alert(
-          `Đơn hàng #${item.id}`,
-          `Khách: ${item.customerName}\nSĐT: ${item.phone}\nĐịa chỉ: ${item.address}\nTổng: ${formatCurrency(item.totalAmount)}\nTrạng thái: ${getStatusLabel(item.status)}`,
-          [{ text: 'Đóng' }]
-        );
-      }}
-    >
-      <View style={styles.orderHeader}>
-        <View>
-          <Text style={styles.orderNumber}>Đơn hàng #{item.id}</Text>
-          <Text style={styles.customerInfo}>{item.customerName}</Text>
+    <View style={styles.orderCardWrapper}>
+      <TouchableOpacity
+        style={styles.orderCard}
+        onPress={() => {
+          Alert.alert(
+            `Đơn hàng #${item.id}`,
+            `Khách: ${item.customerName}\nSĐT: ${item.phone}\nĐịa chỉ: ${item.address}\nTổng: ${formatCurrency(item.totalAmount)}\nTrạng thái: ${getStatusLabel(item.status)}`,
+            [{ text: 'Đóng' }]
+          );
+        }}
+      >
+        <View style={styles.orderHeader}>
+          <View>
+            <Text style={styles.orderNumber}>Đơn hàng #{item.id}</Text>
+            <Text style={styles.customerInfo}>{item.customerName}</Text>
+          </View>
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                backgroundColor: getStatusColor(item.status),
+              },
+            ]}
+          >
+            <Text style={styles.statusText}>{getStatusLabel(item.status)}</Text>
+          </View>
         </View>
-        <View
-          style={[
-            styles.statusBadge,
-            {
-              backgroundColor: getStatusColor(item.status),
-            },
-          ]}
-        >
-          <Text style={styles.statusText}>{getStatusLabel(item.status)}</Text>
-        </View>
-      </View>
-      <View style={styles.orderDetails}>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Phương thức:</Text>
-          <Text style={styles.detailValue}>
-            {item.paymentMethod === 'COD' ? 'Thanh toán khi nhận' : 'Chuyển khoản'}
-          </Text>
-        </View>
-        {item.transactionCode && (
+        <View style={styles.orderDetails}>
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Mã giao dịch:</Text>
-            <Text style={[styles.detailValue, styles.transactionCode]}>
-              {item.transactionCode}
+            <Text style={styles.detailLabel}>Phương thức:</Text>
+            <Text style={styles.detailValue}>
+              {item.paymentMethod === 'COD' ? 'Thanh toán khi nhận' : 'Chuyển khoản'}
             </Text>
           </View>
-        )}
-      </View>
-      <View style={styles.orderFooter}>
-        <Text style={styles.totalLabel}>Tổng tiền:</Text>
-        <Text style={styles.totalAmount}>{formatCurrency(item.totalAmount)}</Text>
-      </View>
-    </TouchableOpacity>
+          {item.transactionCode && (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Mã giao dịch:</Text>
+              <Text style={[styles.detailValue, styles.transactionCode]}>
+                {item.transactionCode}
+              </Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.orderFooter}>
+          <Text style={styles.totalLabel}>Tổng tiền:</Text>
+          <Text style={styles.totalAmount}>{formatCurrency(item.totalAmount)}</Text>
+        </View>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.trackingBtn}
+        onPress={() => router.push(`/OrderTrackingScreen?id=${item.id}`)}
+      >
+        <Text style={styles.trackingBtnText}>📍 Theo Dõi</Text>
+      </TouchableOpacity>
+    </View>
   );
 
   if (loading) {
@@ -373,5 +382,23 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: '#666',
+  },
+  orderCardWrapper: {
+    marginBottom: 12,
+  },
+  trackingBtn: {
+    backgroundColor: '#FF6B6B',
+    marginHorizontal: 12,
+    marginTop: -8,
+    marginBottom: 12,
+    paddingVertical: 10,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    alignItems: 'center',
+  },
+  trackingBtnText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });

@@ -40,23 +40,28 @@ export default function AdminScreen() {
   };
 
   const menuItems = [
-    { id: 1, title: "Trang chu", icon: "", route: "/AdminScreen" },
+    { id: 1, title: "Trang chủ", icon: "", route: "/AdminScreen" },
     { id: 2, title: "Menu", icon: "", route: "#" },
-    { id: 3, title: "San pham", icon: "", route: "/AdminProductsScreen" },
-    { id: 9, title: "Don hang", icon: "", route: "/AdminOrders" },
+    { id: 3, title: "Sản phẩm", icon: "", route: "/AdminProductsScreen" },
+    { id: 6, title: "Danh mục", icon: "", route: "/AdminCategoriesScreen" },
+    { id: 9, title: "Đơn hàng", icon: "", route: "/AdminOrders" },
     { id: 4, title: "Voucher", icon: "", route: "/AdminVouchersScreen" },
-    { id: 5, title: "Nguoi dung", icon: "", route: "/AdminUsersScreen" },
+    { id: 5, title: "Người dùng", icon: "", route: "/AdminUsersScreen" },
+    { id: 7, title: "Thống kê", icon: "", route: "/AdminAnalyticsScreen" },
+    { id: 8, title: "Bình luận", icon: "", route: "/AdminCommentsScreen" },
+    { id: 10, title: "Khuyến mãi", icon: "", route: "/AdminPromotionsScreen" },
+    { id: 11, title: "Hàng tồn kho", icon: "", route: "/AdminInventoryScreen" },
   ];
 
   const dashboardCards = [
-    { id: 1, title: "San pham", value: stats.productCount, color: "#FFA500", icon: "" },
-    { id: 2, title: "Danh muc", value: 12, color: "#10B981", icon: "" },
-    { id: 3, title: "Bai viet", value: 5, color: "#00BCD4", icon: "" },
-    { id: 4, title: "Bai viet DM", value: 2, color: "#FF5252", icon: "" },
-    { id: 5, title: "Lien he", value: 0, color: "#9C27B0", icon: "" },
-    { id: 6, title: "Thanh vien", value: 2, color: "#E91E63", icon: "" },
-    { id: 7, title: "Don chua XL", value: 5, color: "#FF1744", icon: "" },
-    { id: 8, title: "Don da XL", value: 0, color: "#00E676", icon: "" },
+    { id: 1, title: "Sản phẩm", value: stats.productCount, color: "#FFA500", icon: "" },
+    { id: 2, title: "Danh mục", value: 12, color: "#10B981", icon: "" },
+    { id: 3, title: "Bài viết", value: 5, color: "#00BCD4", icon: "" },
+    { id: 4, title: "Bài viết DM", value: 2, color: "#FF5252", icon: "" },
+    { id: 5, title: "Liên hệ", value: 0, color: "#9C27B0", icon: "" },
+    { id: 6, title: "Thành viên", value: 2, color: "#E91E63", icon: "" },
+    { id: 7, title: "Đơn chưa xử lý", value: 5, color: "#FF1744", icon: "" },
+    { id: 8, title: "Đơn đã xử lý", value: 0, color: "#00E676", icon: "" },
   ];
 
   if (isWeb) {
