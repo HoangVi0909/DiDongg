@@ -50,7 +50,7 @@ export default function ProductListScreen() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(`${getApiUrl()}/products`);
+      const res = await fetch(`${getApiUrl()}/api/products`);
       if (res.ok) {
         const data = await res.json();
         // Lọc bỏ sản phẩm không hợp lệ

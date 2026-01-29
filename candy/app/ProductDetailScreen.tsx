@@ -32,7 +32,7 @@ export default function ProductDetailScreen() {
   const fetchProductDetail = async () => {
     try {
       console.log('Fetching product ID:', productId);
-      const url = `${getApiUrl()}/products/${productId}`;
+      const url = `${getApiUrl()}/api/products/${productId}`;
       console.log('URL:', url);
       const res = await fetch(url);
       console.log('Response status:', res.status);

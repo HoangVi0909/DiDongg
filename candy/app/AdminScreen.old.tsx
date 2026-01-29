@@ -23,19 +23,6 @@ export default function AdminScreen() {
     setLoading(false);
   }, []);
 
-  // DISABLED: Admin stats endpoint not available
-  // const fetchStats = async () => {
-  //   try {
-  //     const url = `${getApiUrl()}/admin/stats`;
-  //     const res = await fetch(url);
-  //     if (res.ok) setStats(await res.json());
-  //   } catch (e) {
-  //     console.error("Error:", e);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const fetchProducts = async () => {
     try {
       const url = `${getApiUrl()}/api/products`;

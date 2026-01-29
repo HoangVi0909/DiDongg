@@ -12,7 +12,7 @@ import {
   Pressable,
   Platform,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import AdminSidebar from '../components/AdminSidebar';
 import { getApiUrl } from '../config/network';
 import { useToast } from '../context/ToastContext';
 
@@ -31,7 +31,6 @@ interface Order {
 }
 
 export default function AdminOrders() {
-  const router = useRouter();
   const { showToast } = useToast();
   const [allOrders, setAllOrders] = useState<Order[]>([]); // Lưu TẤT CẢ orders
   const [orders, setOrders] = useState<Order[]>([]); // Lưu orders được filter theo tab
@@ -42,15 +41,6 @@ export default function AdminOrders() {
   const [confirming, setConfirming] = useState(false);
   const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'all'>('pending');
   const [updatingStatus, setUpdatingStatus] = useState(false);
-
-  const menuItems = [
-    { id: 1, title: 'Trang chu', icon: '', route: '/AdminScreen' },
-    { id: 2, title: 'Menu', icon: '', route: '#' },
-    { id: 3, title: 'San pham', icon: '', route: '/AdminProductsScreen' },
-    { id: 9, title: 'Don hang', icon: '', route: '/AdminOrders' },
-    { id: 4, title: 'Voucher', icon: '', route: '/AdminVouchersScreen' },
-    { id: 5, title: 'Nguoi dung', icon: '', route: '/AdminUsersScreen' },
-  ];
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -65,7 +55,7 @@ export default function AdminOrders() {
       setLoading(true);
       
       // Luôn fetch tất cả orders
-      const res = await fetch(`${getApiUrl()}/orders`);
+      const res = await fetch(`${getApiUrl()}/api/orders`);
       if (res.ok) {
         const responseData = await res.json();
         let ordersArray = responseData.orders || responseData;
@@ -104,7 +94,7 @@ export default function AdminOrders() {
       setConfirming(true);
       console.log('🔄 Confirming payment for order:', orderId);
       
-      const res = await fetch(`${getApiUrl()}/orders/${orderId}/confirm-payment`, {
+      const res = await fetch(`${getApiUrl()}/api/orders/${orderId}/confirm-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -173,7 +163,7 @@ export default function AdminOrders() {
   const handleUpdateStatus = async (orderId: number, newStatus: string) => {
     try {
       setUpdatingStatus(true);
-      const res = await fetch(`${getApiUrl()}/orders/${orderId}/status`, {
+      const res = await fetch(`${getApiUrl()}/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -241,16 +231,24 @@ export default function AdminOrders() {
     }).format(amount);
   };
 
+  const getPaymentMethodLabel = (method: string) => {
+    switch (method) {
+      case 'COD':
+        return 'Thanh toán khi nhận';
+      case 'BANK':
+        return 'Chuyển khoản';
+      default:
+        return method;
+    }
+  };
+
   return (
     isWeb ? (
       <View style={styles.containerWeb}>
-        <Sidebar menuItems={menuItems} router={router} />
+        <AdminSidebar />
         <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButton}>← Quay lại</Text>
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Quản lý đơn hàng</Text>
       </View>
 
@@ -517,9 +515,6 @@ export default function AdminOrders() {
       <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButton}>← Quay lại</Text>
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Quản lý đơn hàng</Text>
       </View>
 
@@ -612,7 +607,7 @@ export default function AdminOrders() {
       <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+            <TouchableOpacity style={styles.closeButtonContainer} onPress={() => setModalVisible(false)}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
 
@@ -711,39 +706,8 @@ export default function AdminOrders() {
   );
 }
 
-function Sidebar({ menuItems, router }: any) {
-  return (
-    <View style={styles.sidebar}>
-      <View style={styles.sidebarHeader}>
-        <Text style={styles.sidebarTitle}>Admin</Text>
-        <Text style={styles.sidebarStatus}> Online</Text>
-      </View>
-      <Text style={styles.menuLabel}>MENU admin</Text>
-      <ScrollView style={styles.sidebarMenu} showsVerticalScrollIndicator={false}>
-        {menuItems.map((item: any) => (
-          <TouchableOpacity key={item.id} style={styles.menuItem} onPress={() => item.route !== '#' && router.push(item.route)}>
-            <Text style={styles.menuIcon}>{item.icon}</Text>
-            <Text style={styles.menuText}>{item.title}</Text>
-            <Text style={styles.menuArrow}></Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   containerWeb: { flex: 1, flexDirection: 'row', backgroundColor: '#E8E8E8' },
-  sidebar: { width: 220, backgroundColor: '#2C3E50', paddingVertical: 16, paddingHorizontal: 12 },
-  sidebarHeader: { paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#555' },
-  sidebarTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF', marginBottom: 4 },
-  sidebarStatus: { fontSize: 12, color: '#4CAF50' },
-  menuLabel: { fontSize: 11, color: '#999', marginTop: 12, marginBottom: 8 },
-  sidebarMenu: { flex: 1 },
-  menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 8, marginBottom: 4, borderRadius: 4 },
-  menuIcon: { fontSize: 16, marginRight: 12 },
-  menuText: { fontSize: 14, color: '#DDD', flex: 1 },
-  menuArrow: { fontSize: 14, color: '#999' },
   container: {
     flex: 1,
     backgroundColor: '#f4f6fb',
@@ -1109,5 +1073,75 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#92400e',
     fontWeight: '600',
+  },
+  orderNumber: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  orderInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  orderInfoLabel: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+    flex: 1,
+  },
+  orderInfoValue: {
+    fontSize: 13,
+    color: '#1f2937',
+    fontWeight: '600',
+    flex: 1.5,
+    textAlign: 'right',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  closeButtonText: {
+    fontSize: 24,
+    color: '#6b7280',
+    fontWeight: '300',
+  },
+  detailSection: {
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  detailValueAmount: {
+    fontSize: 16,
+    color: '#10b981',
+    fontWeight: 'bold',
+    flex: 1.5,
+    textAlign: 'right',
+  },
+  modalActions: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  statusUpdateButton: {
+    backgroundColor: '#3b82f6',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  closeButtonContainer: {
+    alignSelf: 'flex-end',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
   },
 });

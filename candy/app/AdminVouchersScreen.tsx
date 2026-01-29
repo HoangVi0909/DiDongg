@@ -12,27 +12,17 @@ import {
   Switch,
   Platform,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import AdminSidebar from '../components/AdminSidebar';
 import { useAdminVoucher, AdminVoucher } from '../context/AdminVoucherContext';
 import { useToast } from '../context/ToastContext';
 
 const isWeb = Platform.OS === 'web';
 
 export default function AdminVouchersScreen() {
-  const router = useRouter();
   const { vouchers, createVoucher, updateVoucher, deleteVoucher, toggleVoucher } = useAdminVoucher();
   const { showToast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [editingVoucher, setEditingVoucher] = useState<AdminVoucher | null>(null);
-
-  const menuItems = [
-    { id: 1, title: 'Trang chu', icon: '', route: '/AdminScreen' },
-    { id: 2, title: 'Menu', icon: '', route: '#' },
-    { id: 3, title: 'San pham', icon: '', route: '/AdminProductsScreen' },
-    { id: 9, title: 'Don hang', icon: '', route: '/AdminOrders' },
-    { id: 4, title: 'Voucher', icon: '', route: '/AdminVouchersScreen' },
-    { id: 5, title: 'Nguoi dung', icon: '', route: '/AdminUsersScreen' },
-  ];
   const [formData, setFormData] = useState({
     code: '',
     discount: '',
@@ -114,7 +104,7 @@ export default function AdminVouchersScreen() {
         text: 'Xóa',
         onPress: async () => {
           if (voucher.id) {
-            const success = await deleteVoucher(voucher.id);
+            const success = await deleteVoucher(String(voucher.id));
             if (success) {
               showToast('✅ Xóa voucher thành công!', 'success');
             } else {
@@ -166,7 +156,9 @@ export default function AdminVouchersScreen() {
             <Switch
               value={item.isActive && !isExpired}
               onValueChange={() => {
-                toggleVoucher(item.id!);
+                if (item.id) {
+                  toggleVoucher(String(item.id));
+                }
               }}
               disabled={isExpired}
             />
@@ -188,7 +180,7 @@ export default function AdminVouchersScreen() {
   return (
     isWeb ? (
       <View style={styles.containerWeb}>
-        <Sidebar menuItems={menuItems} router={router} />
+        <AdminSidebar />
         <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Quản lý Voucher</Text>
@@ -331,7 +323,11 @@ export default function AdminVouchersScreen() {
                   <Text style={styles.voucherCode}>{item.code}</Text>
                   <Switch
                     value={item.isActive}
-                    onValueChange={() => toggleVoucher(item.id!)}
+                    onValueChange={() => {
+                      if (item.id) {
+                        toggleVoucher(String(item.id));
+                      }
+                    }}
                     trackColor={{ false: '#767577', true: '#81c784' }}
                     thumbColor={item.isActive ? '#4caf50' : '#f50057'}
                   />
@@ -368,11 +364,13 @@ export default function AdminVouchersScreen() {
                         {
                           text: 'Xóa',
                           onPress: async () => {
-                            const success = await deleteVoucher(item.id);
-                            if (success) {
-                              showToast('Xóa voucher thành công', 'success');
-                            } else {
-                              showToast('Lỗi xóa voucher', 'error');
+                            if (item.id) {
+                              const success = await deleteVoucher(String(item.id));
+                              if (success) {
+                                showToast('Xóa voucher thành công', 'success');
+                              } else {
+                                showToast('Lỗi xóa voucher', 'error');
+                              }
                             }
                           },
                           style: 'destructive',
@@ -385,7 +383,7 @@ export default function AdminVouchersScreen() {
                 </View>
               </View>
             )}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) => String(item.id || Math.random())}
             scrollEnabled={false}
           />
         )}
@@ -500,92 +498,11 @@ export default function AdminVouchersScreen() {
   );
 }
 
-function Sidebar({ menuItems, router }: any) {
-  return (
-    <View style={styles.sidebar}>
-      <View style={styles.sidebarHeader}>
-        <Text style={styles.sidebarTitle}>Admin</Text>
-        <Text style={styles.sidebarStatus}> Online</Text>
-      </View>
-      <Text style={styles.menuLabel}>MENU admin</Text>
-      <ScrollView style={styles.sidebarMenu} showsVerticalScrollIndicator={false}>
-        {menuItems.map((item: any) => (
-          <TouchableOpacity key={item.id} style={styles.menuItem} onPress={() => item.route !== '#' && router.push(item.route)}>
-            <Text style={styles.menuIcon}>{item.icon}</Text>
-            <Text style={styles.menuText}>{item.title}</Text>
-            <Text style={styles.menuArrow}></Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   containerWeb: {
     flex: 1,
     flexDirection: 'row',
     backgroundColor: '#f5f5f5',
-  },
-  sidebar: {
-    width: 250,
-    backgroundColor: '#2c3e50',
-    paddingVertical: 20,
-    borderRightWidth: 1,
-    borderRightColor: '#ecf0f1',
-  },
-  sidebarHeader: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#34495e',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sidebarTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  sidebarStatus: {
-    fontSize: 12,
-    color: '#27ae60',
-    marginLeft: 4,
-  },
-  menuLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#95a5a6',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    textTransform: 'uppercase',
-  },
-  sidebarMenu: {
-    flex: 1,
-    paddingVertical: 8,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginVertical: 4,
-  },
-  menuIcon: {
-    fontSize: 18,
-    color: '#ecf0f1',
-    marginRight: 12,
-    width: 24,
-  },
-  menuText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#ecf0f1',
-    fontWeight: '500',
-  },
-  menuArrow: {
-    fontSize: 16,
-    color: '#95a5a6',
   },
   content: {
     flex: 1,

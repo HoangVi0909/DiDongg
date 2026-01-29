@@ -24,7 +24,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       console.log(`🔐 Attempting login for user: ${username}`);
-      const res = await fetch(`${getApiUrl()}/auth/login`, {
+      const res = await fetch(`${getApiUrl()}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username.trim(), password })

@@ -28,12 +28,12 @@ export default function CustomerScreen() {
   const [maxPrice, setMaxPrice] = useState('');
 
   const categories: Category[] = [
-    { id: 1, name: 'Kẹo', emoji: '🍬' },
-    { id: 2, name: 'Nước Ngọt', emoji: '🥤' },
-    { id: 3, name: 'Snack', emoji: '🍿' },
-    { id: 4, name: 'Bánh', emoji: '🍪' },
-    { id: 5, name: 'Kem', emoji: '🍦' },
-    { id: 6, name: 'Cà Phê', emoji: '☕' },
+    { id: 1, name: 'Bánh Ngọt', emoji: '🥤' },
+    { id: 2, name: 'Kẹo ngọt', emoji: '🍬' },
+    { id: 3, name: 'Bánh Quy', emoji: '🍪' },
+    { id: 4, name: 'Đồ ngọt cao cấp', emoji: '☕' },
+    { id: 5, name: 'Nước', emoji: '🥤' },
+    // { id: 6, name: 'Cà Phê', emoji: '☕' },
   ];
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function CustomerScreen() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(`${getApiUrl()}/products`);
+      const res = await fetch(`${getApiUrl()}/api/products`);
       if (res.ok) {
         const data = await res.json();
         const validProducts = data.filter((p: Product) => p.name && p.price !== null && p.price !== undefined);
@@ -90,7 +90,7 @@ export default function CustomerScreen() {
   const getCategoryName = () => {
     if (selectedCategory === null) return 'Tất cả danh mục';
     const cat = categories.find(c => c.id === selectedCategory);
-    return cat ? `${cat.emoji} ${cat.name}` : 'Tất cả danh mục';
+    return cat ? `${cat.emoji} ${cat.name}` : 'Tất cả ';
   };
 
   const getPriceRangeText = () => {

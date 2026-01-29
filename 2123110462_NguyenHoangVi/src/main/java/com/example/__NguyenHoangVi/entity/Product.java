@@ -32,9 +32,5 @@ public class Product {
     @JsonProperty("categoryId")
     private Long categoryId;
 
-    @Column(name = "brand_id")
-    @JsonProperty("brandId")
-    private Long brandId;
-
     private Integer status;
 }

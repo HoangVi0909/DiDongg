@@ -10,13 +10,11 @@ public class Review {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    @Column(name = "product_id", nullable = false)
+    private Long productId;
 
-    @ManyToOne
-    @JoinColumn(name = "customer_id", nullable = false)
-    private Customer customer;
+    @Column(name = "customer_id", nullable = false)
+    private Long customerId;
 
     @Column(nullable = false)
     private Integer rating; // 1-5 stars
@@ -49,9 +47,9 @@ public class Review {
     public Review() {
     }
 
-    public Review(Product product, Customer customer, Integer rating, String content) {
-        this.product = product;
-        this.customer = customer;
+    public Review(Long productId, Long customerId, Integer rating, String content) {
+        this.productId = productId;
+        this.customerId = customerId;
         this.rating = rating;
         this.content = content;
     }
@@ -65,20 +63,20 @@ public class Review {
         this.id = id;
     }
 
-    public Product getProduct() {
-        return product;
+    public Long getProductId() {
+        return productId;
     }
 
-    public void setProduct(Product product) {
-        this.product = product;
+    public void setProductId(Long productId) {
+        this.productId = productId;
     }
 
-    public Customer getCustomer() {
-        return customer;
+    public Long getCustomerId() {
+        return customerId;
     }
 
-    public void setCustomer(Customer customer) {
-        this.customer = customer;
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
     }
 
     public Integer getRating() {

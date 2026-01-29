@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import AdminSidebar from '../components/AdminSidebar';
 import { useToast } from '../context/ToastContext';
 import { getApiUrl } from '../config/network';
 
@@ -31,7 +31,6 @@ interface User {
 }
 
 export default function AdminUsersScreen() {
-  const router = useRouter();
   const { showToast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,15 +39,6 @@ export default function AdminUsersScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-
-  const menuItems = [
-    { id: 1, title: 'Trang chu', icon: '', route: '/AdminScreen' },
-    { id: 2, title: 'Menu', icon: '', route: '#' },
-    { id: 3, title: 'San pham', icon: '', route: '/AdminProductsScreen' },
-    { id: 9, title: 'Don hang', icon: '', route: '/AdminOrders' },
-    { id: 4, title: 'Voucher', icon: '', route: '/AdminVouchersScreen' },
-    { id: 5, title: 'Nguoi dung', icon: '', route: '/AdminUsersScreen' },
-  ];
 
   const [formData, setFormData] = useState<{
     name: string;
@@ -272,7 +262,7 @@ export default function AdminUsersScreen() {
   if (isWeb) {
     return (
       <View style={styles.containerWeb}>
-        <Sidebar menuItems={menuItems} router={router} />
+        <AdminSidebar />
         <View style={styles.container}>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Quản lý Người dùng</Text>
@@ -716,96 +706,11 @@ export default function AdminUsersScreen() {
   );
 }
 
-function Sidebar({ menuItems, router }: any) {
-  return (
-    <View style={styles.sidebar}>
-      <View style={styles.sidebarHeader}>
-        <Text style={styles.sidebarTitle}>Admin</Text>
-        <Text style={styles.sidebarStatus}> Online</Text>
-      </View>
-      <Text style={styles.menuLabel}>MENU admin</Text>
-      <ScrollView style={styles.sidebarMenu} showsVerticalScrollIndicator={false}>
-        {menuItems.map((item: any) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.menuItem}
-            onPress={() => item.route !== '#' && router.push(item.route)}
-          >
-            <Text style={styles.menuIcon}>{item.icon}</Text>
-            <Text style={styles.menuText}>{item.title}</Text>
-            <Text style={styles.menuArrow}></Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   containerWeb: {
     flex: 1,
     flexDirection: 'row',
     backgroundColor: '#f5f5f5',
-  },
-  sidebar: {
-    width: 250,
-    backgroundColor: '#2c3e50',
-    paddingVertical: 20,
-    borderRightWidth: 1,
-    borderRightColor: '#ecf0f1',
-  },
-  sidebarHeader: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#34495e',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sidebarTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  sidebarStatus: {
-    fontSize: 12,
-    color: '#27ae60',
-    marginLeft: 4,
-  },
-  menuLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#95a5a6',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    textTransform: 'uppercase',
-  },
-  sidebarMenu: {
-    flex: 1,
-    paddingVertical: 8,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginVertical: 4,
-  },
-  menuIcon: {
-    fontSize: 18,
-    color: '#ecf0f1',
-    marginRight: 12,
-    width: 24,
-  },
-  menuText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#ecf0f1',
-    fontWeight: '500',
-  },
-  menuArrow: {
-    fontSize: 16,
-    color: '#95a5a6',
   },
   container: {
     flex: 1,

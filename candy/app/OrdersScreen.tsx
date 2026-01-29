@@ -45,7 +45,7 @@ export default function OrdersScreen() {
       
       // Thử fetch by phone trước nếu có phone
       if (cleanPhone && cleanPhone.length > 0) {
-        const url = `${getApiUrl()}/orders/by-phone?phone=${encodeURIComponent(cleanPhone)}`;
+        const url = `${getApiUrl()}/api/orders/by-phone?phone=${encodeURIComponent(cleanPhone)}`;
         console.log('📱 Fetching orders with phone:', url);
         
         const res = await fetch(url);
@@ -62,7 +62,7 @@ export default function OrdersScreen() {
       // Nếu không tìm thấy order by phone, fallback lấy tất cả (cho compatible với order cũ)
       if (ordersArray.length === 0) {
         console.log('⚠️ No orders found by phone, falling back to fetch all orders...');
-        const url = `${getApiUrl()}/orders`;
+        const url = `${getApiUrl()}/api/orders`;
         console.log('📱 Fetching all orders:', url);
         
         const res = await fetch(url);

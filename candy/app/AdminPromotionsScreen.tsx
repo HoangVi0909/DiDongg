@@ -11,7 +11,7 @@ import {
   Platform,
   FlatList,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import AdminSidebar from '../components/AdminSidebar';
 import { useToast } from '../context/ToastContext';
 
 const isWeb = Platform.OS === 'web';
@@ -30,7 +30,6 @@ interface Promotion {
 }
 
 export default function AdminPromotionsScreen() {
-  const router = useRouter();
   const { showToast } = useToast();
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,24 +49,12 @@ export default function AdminPromotionsScreen() {
     code: '',
   });
 
-  const menuItems = [
-    { id: 1, title: 'Trang chu', icon: '', route: '/AdminScreen' },
-    { id: 2, title: 'Menu', icon: '', route: '#' },
-    { id: 3, title: 'San pham', icon: '', route: '/AdminProductsScreen' },
-    { id: 6, title: 'Danh muc', icon: '', route: '/AdminCategoriesScreen' },
-    { id: 9, title: 'Don hang', icon: '', route: '/AdminOrders' },
-    { id: 4, title: 'Voucher', icon: '', route: '/AdminVouchersScreen' },
-    { id: 5, title: 'Nguoi dung', icon: '', route: '/AdminUsersScreen' },
-    { id: 7, title: 'Thong ke', icon: '', route: '/AdminAnalyticsScreen' },
-    { id: 8, title: 'Binh luan', icon: '', route: '/AdminCommentsScreen' },
-    { id: 10, title: 'Khuyen mai', icon: '', route: '/AdminPromotionsScreen' },
-  ];
-
   useEffect(() => {
     const loadPromotions = async () => {
       await fetchPromotions();
     };
     loadPromotions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPromotions = async () => {
@@ -232,7 +219,7 @@ export default function AdminPromotionsScreen() {
   if (isWeb) {
     return (
       <View style={styles.containerWeb}>
-        <Sidebar menuItems={menuItems} router={router} />
+        <AdminSidebar />
         <View style={styles.container}>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>🎉 Quản lý Khuyến Mãi</Text>
@@ -575,22 +562,6 @@ export default function AdminPromotionsScreen() {
   );
 }
 
-function Sidebar({ menuItems, router }: any) {
-  return (
-    <ScrollView style={styles.sidebar}>
-      {menuItems.map((item: any) => (
-        <TouchableOpacity
-          key={item.id}
-          style={styles.menuItem}
-          onPress={() => router.push(item.route)}
-        >
-          <Text style={styles.menuText}>{item.title}</Text>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
-  );
-}
-
 const styles = StyleSheet.create({
   containerWeb: {
     flex: 1,
@@ -601,22 +572,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
     padding: 16,
-  },
-  sidebar: {
-    width: 200,
-    backgroundColor: '#2c3e50',
-    paddingVertical: 20,
-  },
-  menuItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomColor: '#34495e',
-    borderBottomWidth: 1,
-  },
-  menuText: {
-    color: '#ecf0f1',
-    fontSize: 14,
-    fontWeight: '500',
   },
   header: {
     marginBottom: 16,

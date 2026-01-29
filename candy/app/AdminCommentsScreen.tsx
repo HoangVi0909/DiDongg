@@ -11,7 +11,7 @@ import {
   Platform,
   FlatList,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import AdminSidebar from '../components/AdminSidebar';
 import { useToast } from '../context/ToastContext';
 import { getApiUrl } from '../config/network';
 
@@ -28,7 +28,6 @@ interface Review {
 }
 
 export default function AdminCommentsScreen() {
-  const router = useRouter();
   const { showToast } = useToast();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -36,20 +35,6 @@ export default function AdminCommentsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-
-  const menuItems = [
-    { id: 1, title: 'Trang chu', icon: '', route: '/AdminScreen' },
-    { id: 2, title: 'Menu', icon: '', route: '#' },
-    { id: 3, title: 'San pham', icon: '', route: '/AdminProductsScreen' },
-    { id: 6, title: 'Danh muc', icon: '', route: '/AdminCategoriesScreen' },
-    { id: 9, title: 'Don hang', icon: '', route: '/AdminOrders' },
-    { id: 4, title: 'Voucher', icon: '', route: '/AdminVouchersScreen' },
-    { id: 5, title: 'Nguoi dung', icon: '', route: '/AdminUsersScreen' },
-    { id: 7, title: 'Thong ke', icon: '', route: '/AdminAnalyticsScreen' },
-    { id: 8, title: 'Binh luan', icon: '', route: '/AdminCommentsScreen' },
-    { id: 10, title: 'Khuyen mai', icon: '', route: '/AdminPromotionsScreen' },
-    { id: 11, title: 'Hang ton kho', icon: '', route: '/AdminInventoryScreen' },
-  ];
 
   useEffect(() => {
     const loadComments = async () => {
@@ -203,7 +188,7 @@ export default function AdminCommentsScreen() {
   if (isWeb) {
     return (
       <View style={styles.containerWeb}>
-        <Sidebar menuItems={menuItems} router={router} />
+        <AdminSidebar />
         <View style={styles.container}>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>💬 Quản lý Bình Luận</Text>
@@ -433,22 +418,6 @@ export default function AdminCommentsScreen() {
   );
 }
 
-function Sidebar({ menuItems, router }: any) {
-  return (
-    <ScrollView style={styles.sidebar}>
-      {menuItems.map((item: any) => (
-        <TouchableOpacity
-          key={item.id}
-          style={styles.menuItem}
-          onPress={() => router.push(item.route)}
-        >
-          <Text style={styles.menuText}>{item.title}</Text>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
-  );
-}
-
 const styles = StyleSheet.create({
   containerWeb: {
     flex: 1,
@@ -459,22 +428,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
     padding: 16,
-  },
-  sidebar: {
-    width: 200,
-    backgroundColor: '#2c3e50',
-    paddingVertical: 20,
-  },
-  menuItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomColor: '#34495e',
-    borderBottomWidth: 1,
-  },
-  menuText: {
-    color: '#ecf0f1',
-    fontSize: 14,
-    fontWeight: '500',
   },
   header: {
     marginBottom: 16,

@@ -12,14 +12,13 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import AdminSidebar from '../components/AdminSidebar';
 import { useAdminProduct, AdminProduct } from '../context/AdminProductContext';
 import { useToast } from '../context/ToastContext';
 
 const isWeb = Platform.OS === 'web';
 
 export default function AdminProductsScreen() {
-  const router = useRouter();
   const { products, loading, addProduct, updateProduct, deleteProduct } = useAdminProduct();
   const { showToast } = useToast();
   const [showModal, setShowModal] = useState(false);
@@ -27,15 +26,6 @@ export default function AdminProductsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-
-  const menuItems = [
-    { id: 1, title: 'Trang chu', icon: '', route: '/AdminScreen' },
-    { id: 2, title: 'Menu', icon: '', route: '#' },
-    { id: 3, title: 'San pham', icon: '', route: '/AdminProductsScreen' },
-    { id: 9, title: 'Don hang', icon: '', route: '/AdminOrders' },
-    { id: 4, title: 'Voucher', icon: '', route: '/AdminVouchersScreen' },
-    { id: 5, title: 'Nguoi dung', icon: '', route: '/AdminUsersScreen' },
-  ];
 
   const [formData, setFormData] = useState({
     name: '',
@@ -182,11 +172,10 @@ export default function AdminProductsScreen() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-
   return (
     isWeb ? (
       <View style={styles.containerWeb}>
-        <Sidebar menuItems={menuItems} router={router} />
+        <AdminSidebar />
         <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Quản lý Sản phẩm</Text>
@@ -497,39 +486,8 @@ export default function AdminProductsScreen() {
   );
 }
 
-function Sidebar({ menuItems, router }: any) {
-  return (
-    <View style={styles.sidebar}>
-      <View style={styles.sidebarHeader}>
-        <Text style={styles.sidebarTitle}>Admin</Text>
-        <Text style={styles.sidebarStatus}> Online</Text>
-      </View>
-      <Text style={styles.menuLabel}>MENU admin</Text>
-      <ScrollView style={styles.sidebarMenu} showsVerticalScrollIndicator={false}>
-        {menuItems.map((item: any) => (
-          <TouchableOpacity key={item.id} style={styles.menuItem} onPress={() => item.route !== '#' && router.push(item.route)}>
-            <Text style={styles.menuIcon}>{item.icon}</Text>
-            <Text style={styles.menuText}>{item.title}</Text>
-            <Text style={styles.menuArrow}></Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   containerWeb: { flex: 1, flexDirection: 'row', backgroundColor: '#E8E8E8' },
-  sidebar: { width: 220, backgroundColor: '#2C3E50', paddingVertical: 16, paddingHorizontal: 12 },
-  sidebarHeader: { paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#555' },
-  sidebarTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF', marginBottom: 4 },
-  sidebarStatus: { fontSize: 12, color: '#4CAF50' },
-  menuLabel: { fontSize: 11, color: '#999', marginTop: 12, marginBottom: 8 },
-  sidebarMenu: { flex: 1 },
-  menuItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 8, marginBottom: 4, borderRadius: 4 },
-  menuIcon: { fontSize: 16, marginRight: 12 },
-  menuText: { fontSize: 14, color: '#DDD', flex: 1 },
-  menuArrow: { fontSize: 14, color: '#999' },
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',

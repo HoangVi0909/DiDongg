@@ -10,9 +10,8 @@ public class Inventory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    @Column(name = "product_id", nullable = false)
+    private Long productId;
 
     @Column(name = "quantity_in_stock", nullable = false)
     private Integer quantityInStock;
@@ -39,8 +38,8 @@ public class Inventory {
     public Inventory() {
     }
 
-    public Inventory(Product product, Integer quantityInStock) {
-        this.product = product;
+    public Inventory(Long productId, Integer quantityInStock) {
+        this.productId = productId;
         this.quantityInStock = quantityInStock;
         updateStatus();
     }
@@ -65,12 +64,12 @@ public class Inventory {
         this.id = id;
     }
 
-    public Product getProduct() {
-        return product;
+    public Long getProductId() {
+        return productId;
     }
 
-    public void setProduct(Product product) {
-        this.product = product;
+    public void setProductId(Long productId) {
+        this.productId = productId;
     }
 
     public Integer getQuantityInStock() {

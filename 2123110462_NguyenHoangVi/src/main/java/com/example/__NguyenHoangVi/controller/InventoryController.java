@@ -68,7 +68,7 @@ public class InventoryController {
     // Create inventory
     @PostMapping
     public ResponseEntity<Inventory> createInventory(@RequestBody Inventory inventory) {
-        if (inventory.getProduct() == null) {
+        if (inventory.getProductId() == null) {
             return ResponseEntity.badRequest().build();
         }
         inventory.setLastUpdated(LocalDateTime.now());

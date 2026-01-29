@@ -1,11 +1,7 @@
 package com.example.__NguyenHoangVi.controller;
 
 import com.example.__NguyenHoangVi.entity.Review;
-import com.example.__NguyenHoangVi.entity.Product;
-import com.example.__NguyenHoangVi.entity.Customer;
 import com.example.__NguyenHoangVi.repository.ReviewRepository;
-import com.example.__NguyenHoangVi.repository.ProductRepository;
-import com.example.__NguyenHoangVi.repository.CustomerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,12 +19,6 @@ public class ReviewController {
 
     @Autowired
     private ReviewRepository reviewRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private CustomerRepository customerRepository;
 
     // Get all reviews
     @GetMapping
@@ -78,7 +68,7 @@ public class ReviewController {
     // Create review
     @PostMapping
     public ResponseEntity<Review> createReview(@RequestBody Review review) {
-        if (review.getProduct() == null || review.getCustomer() == null) {
+        if (review.getProductId() == null || review.getCustomerId() == null) {
             return ResponseEntity.badRequest().build();
         }
         review.setCreatedAt(LocalDateTime.now());

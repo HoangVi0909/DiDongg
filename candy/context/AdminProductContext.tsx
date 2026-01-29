@@ -33,7 +33,7 @@ export function AdminProductProvider({ children }: { children: React.ReactNode }
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${getApiUrl()}/products`);
+      const res = await fetch(`${getApiUrl()}/api/products`);
       if (res.ok) {
         const data = await res.json();
         setProducts(data);

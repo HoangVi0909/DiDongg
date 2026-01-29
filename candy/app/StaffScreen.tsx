@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { getApiUrl } from '../config/network';
 
 export default function StaffScreen() {
   const router = useRouter();
@@ -14,22 +13,30 @@ export default function StaffScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
+    // ⚠️ ADMIN STATS API DISABLED - Using mock data only
+    setStats({
+      productCount: 8,
+      orderCount: 12,
+      customerCount: 5,
+      totalRevenue: '2,500,000'
+    });
+    setLoading(false);
   }, []);
 
-  const fetchStats = async () => {
-    try {
-      const res = await fetch(`${getApiUrl()}/admin/stats`);
-      if (res.ok) {
-        const data = await res.json();
-        setStats(data);
-      }
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // DISABLED: Admin stats endpoint not available
+  // const fetchStats = async () => {
+  //   try {
+  //     const res = await fetch(`${getApiUrl()}/admin/stats`);
+  //     if (res.ok) {
+  //       const data = await res.json();
+  //       setStats(data);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching stats:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const menuItems = [
     { title: 'Bán hàng', icon: '🛍️', color: '#3b82f6', route: '/StaffSales' as const },

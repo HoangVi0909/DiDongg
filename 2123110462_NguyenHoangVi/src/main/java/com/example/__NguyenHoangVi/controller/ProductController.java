@@ -2,7 +2,6 @@ package com.example.__NguyenHoangVi.controller;
 
 import com.example.__NguyenHoangVi.entity.Product;
 import com.example.__NguyenHoangVi.repository.ProductRepository;
-import com.example.__NguyenHoangVi.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {

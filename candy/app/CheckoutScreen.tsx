@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { useUser } from '../context/UserContext';
@@ -30,6 +31,31 @@ export default function CheckoutScreen() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [orderId, setOrderId] = useState<number | null>(null);
   const [phoneError, setPhoneError] = useState('');
+
+  // Load user data from AsyncStorage khi component mount
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const userStr = await AsyncStorage.getItem('@user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        console.log('📦 Loaded user data:', { 
+          fullName: user.fullName, 
+          phone: user.phone, 
+          address: user.address 
+        });
+        
+        if (user.fullName) setName(user.fullName);
+        if (user.phone) setPhone(user.phone);
+        if (user.address) setAddress(user.address);
+      }
+    } catch (error) {
+      console.error('❌ Error loading user data:', error);
+    }
+  };
 
   // Thông tin ngân hàng của bạn
   const BANK_INFO = {
@@ -135,10 +161,10 @@ export default function CheckoutScreen() {
       };
 
       console.log('📤 Creating order with data:', orderData);
-      console.log('🌐 API URL:', `${getApiUrl()}/orders`);
+      console.log('🌐 API URL:', `${getApiUrl()}/api/orders`);
 
       // Gọi API tạo đơn hàng
-      const res = await fetch(`${getApiUrl()}/orders`, {
+      const res = await fetch(`${getApiUrl()}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData),

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
-import { getApiUrl } from '../config/network';
+// ⚠️ VOUCHER API DISABLED - getApiUrl import removed
+// import { getApiUrl } from '../config/network';
 
 export interface AdminVoucher {
   id?: string | number;
@@ -33,28 +34,28 @@ export function AdminVoucherProvider({ children }: { children: React.ReactNode }
   const fetchVouchers = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${getApiUrl()}/vouchers`);
-      if (response.ok) {
-        const data = await response.json();
-        setVouchers(data);
-      } else {
-        // Fallback to mock data
-        const mockVouchers: AdminVoucher[] = [
-          {
-            id: '1',
-            code: 'SALE2025',
-            discount: 15,
-            type: 'percent',
-            description: 'Giảm 15% cho tất cả sản phẩm',
-            expiryDate: '2025-12-31',
-            minOrder: 100000,
-            maxUse: 100,
-            usedCount: 25,
-            isActive: true,
-          },
-        ];
-        setVouchers(mockVouchers);
-      }
+      // ⚠️ VOUCHER API DISABLED - Using mock data only
+      // const response = await fetch(`${getApiUrl()}/api/vouchers`);
+      // if (response.ok) {
+      //   const data = await response.json();
+      //   setVouchers(data);
+      // } else {
+      const mockVouchers: AdminVoucher[] = [
+        {
+          id: '1',
+          code: 'SALE2025',
+          discount: 15,
+          type: 'percent',
+          description: 'Giảm 15% cho tất cả sản phẩm',
+          expiryDate: '2025-12-31',
+          minOrder: 100000,
+          maxUse: 100,
+          usedCount: 25,
+          isActive: true,
+        },
+      ];
+      setVouchers(mockVouchers);
+      // }
     } catch (error) {
       console.error('Error fetching vouchers:', error);
       // Fallback to mock data if API fails
@@ -79,9 +80,13 @@ export function AdminVoucherProvider({ children }: { children: React.ReactNode }
   };
 
   const createVoucher = async (voucher: AdminVoucher): Promise<boolean> => {
+    // ⚠️ VOUCHER API DISABLED - Create operation not available
+    console.warn('Voucher API is disabled - Create operation not available');
+    return false;
+    /* 
     try {
       setLoading(true);
-      const response = await fetch(`${getApiUrl()}/vouchers`, {
+      const response = await fetch(`${getApiUrl()}/api/vouchers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,12 +117,17 @@ export function AdminVoucherProvider({ children }: { children: React.ReactNode }
     } finally {
       setLoading(false);
     }
+    */
   };
 
   const updateVoucher = async (voucher: AdminVoucher): Promise<boolean> => {
+    // ⚠️ VOUCHER API DISABLED - Update operation not available
+    console.warn('Voucher API is disabled - Update operation not available');
+    return false;
+    /*
     try {
       setLoading(true);
-      const response = await fetch(`${getApiUrl()}/vouchers/${voucher.id}`, {
+      const response = await fetch(`${getApiUrl()}/api/vouchers/${voucher.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -149,12 +159,17 @@ export function AdminVoucherProvider({ children }: { children: React.ReactNode }
     } finally {
       setLoading(false);
     }
+    */
   };
 
   const deleteVoucher = async (voucherId: string): Promise<boolean> => {
+    // ⚠️ VOUCHER API DISABLED - Delete operation not available
+    console.warn('Voucher API is disabled - Delete operation not available');
+    return false;
+    /*
     try {
       setLoading(true);
-      const response = await fetch(`${getApiUrl()}/vouchers/${voucherId}`, {
+      const response = await fetch(`${getApiUrl()}/api/vouchers/${voucherId}`, {
         method: 'DELETE',
       });
 
@@ -172,12 +187,17 @@ export function AdminVoucherProvider({ children }: { children: React.ReactNode }
     } finally {
       setLoading(false);
     }
+    */
   };
 
   const toggleVoucher = async (voucherId: string): Promise<boolean> => {
+    // ⚠️ VOUCHER API DISABLED - Toggle operation not available
+    console.warn('Voucher API is disabled - Toggle operation not available');
+    return false;
+    /*
     try {
       setLoading(true);
-      const response = await fetch(`${getApiUrl()}/vouchers/${voucherId}/toggle`, {
+      const response = await fetch(`${getApiUrl()}/api/vouchers/${voucherId}/toggle`, {
         method: 'PUT',
       });
 
@@ -196,6 +216,7 @@ export function AdminVoucherProvider({ children }: { children: React.ReactNode }
     } finally {
       setLoading(false);
     }
+    */
   };
 
   React.useEffect(() => {

@@ -35,14 +35,19 @@ export default function HomeScreen() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(`${getApiUrl()}/products`);
+      const url = `${getApiUrl()}/api/products`;
+      console.log('📡 Fetching products from:', url);
+      const res = await fetch(url);
+      console.log('✅ Response status:', res.status);
       if (res.ok) {
         const data = await res.json();
-        const validProducts = data.filter((p: Product) => p.name && p.price !== null && p.price !== undefined);
+        console.log('✅ Fetched products count:', data.length || data.value?.length);
+        const validProducts = data.filter ? data.filter((p: Product) => p.name && p.price !== null && p.price !== undefined) : data;
         setProducts(validProducts);
+        console.log('✅ Valid products set:', validProducts.length);
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error('❌ Error fetching products:', error);
     } finally {
       setLoading(false);
     }

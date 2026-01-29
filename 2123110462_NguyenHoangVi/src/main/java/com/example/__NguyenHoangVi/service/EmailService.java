@@ -30,7 +30,6 @@ public class EmailService {
             message.setTo(toEmail);
             message.setSubject("🍬 Candy Shop - Xác nhận đổi mật khẩu");
 
-            String resetLink = "http://192.168.2.51:3000/reset-password?token=" + resetToken;
             String emailContent = String.format(
                     "Xin chào,\n\n" +
                             "Bạn vừa yêu cầu đổi mật khẩu cho tài khoản Candy Shop.\n\n" +
